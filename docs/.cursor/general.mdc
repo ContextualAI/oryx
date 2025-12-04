@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+---
+
+## For commands
+
+- For pnpm commands like `pnpm build` in `docs` directory, you always need to run it with all permissions (especially network permission).
+
+## For writing MDX contents
+
+- Keep heading structure flatten. Only use `#` for headings. Do not use more nested levels like `##` or `###`.
+- Use bold conservatively. Do not use italic.
+- Do not use the en dash (`–`); prefer the em dash (`—`) instead. When using an em dash, always include a space before and after it (e.g. `vital — whether`, not `vital—whether`).
+- MDX docs content should be extremely concise. Only keep necessary sentences, and don't keep boring / redundant / repetitive contents. Be very straightforward and crisp.

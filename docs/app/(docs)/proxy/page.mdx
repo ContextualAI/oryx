@@ -1,0 +1,179 @@
+export const metadata = {
+  title: "Proxy Customization",
+  description:
+    "Fine-grained control over the SSE proxy for custom routing, headers, and error handling.",
+};
+
+<DocsTitle title={"Proxy Customization"} backHref={"/"} />
+
+# When to use proxy?
+
+Proxying your requests to Contextual AI is highly recommended for production deployments to protect your account.
+
+- Secure your API key <span className="text-secondary">— proxying keeps your API key (secret) out of the browser.</span>
+- Enforce authentication <span className="text-secondary">— validate user sessions before forwarding requests.</span>
+- Route dynamically <span className="text-secondary">— hardcode or select agent IDs on server side, dynamically.</span>
+- Rate limit on your end <span className="text-secondary">— add additional layers of rate limiting using your tech stack.</span>
+
+The only exception is when using OIDC (enterprise plans only, [contact us](https://contextual.ai/contact-us)). In that case, tokens can be passed directly in the client fetcher — though a proxy still works if you prefer centralized control.
+
+# Transforming the URL
+
+Use `transform` to rewrite the target path based on the incoming request, such as when agent ID needs to be extracted from the query string, or when you need to set agent ID dynamically based on the user's authentication state.
+
+```ts
+import { createOryxSSEProxy } from "@contextualai/oryx-proxy-node";
+
+export const POST = createOryxSSEProxy({
+  baseUrl: "https://api.contextual.ai",
+  transform: (request) => {
+    const url = new URL(request.url);
+    const agentId = url.searchParams.get("agentId");
+    if (!agentId) throw new Error("Missing agentId");
+
+    // /api/chat?agentId=123 -> /v1/agents/123/query.
+    return { url: `/v1/agents/${agentId}/query` };
+  },
+  extendHeaders: () => ({
+    Authorization: `Bearer ${process.env.CONTEXTUAL_API_KEY}`,
+  }),
+});
+```
+
+# Extending headers
+
+`extendHeaders` injects headers into the upstream request. You can use this function to validate your user's authentication state, or inject Contextual AI API key conditionally.
+
+```ts
+import { createOryxSSEProxy } from "@contextualai/oryx-proxy-node";
+
+export const POST = createOryxSSEProxy({
+  baseUrl: "https://api.contextual.ai",
+  transform: (request) => ({
+    url: `/v1/agents/${process.env.CONTEXTUAL_AGENT_ID}/query`,
+  }),
+  extendHeaders: async (request) => {
+    // Example: inject user's OIDC token.
+    const userToken = request.headers.get("x-user-token");
+    if (!userToken) throw new Error("Unauthorized");
+
+    return {
+      Authorization: `Bearer ${userToken}`,
+    };
+  },
+});
+```
+
+# Custom error mapping
+
+Override `mapErrorBody` to customize error event payloads.
+
+```ts
+import { createOryxSSEProxy } from "@contextualai/oryx-proxy-node";
+
+export const POST = createOryxSSEProxy({
+  baseUrl: "https://api.contextual.ai",
+  transform: (request) => ({
+    url: `/v1/agents/${process.env.CONTEXTUAL_AGENT_ID}/query`,
+  }),
+  extendHeaders: () => ({
+    Authorization: `Bearer ${process.env.CONTEXTUAL_API_KEY}`,
+  }),
+  mapErrorBody: (rawBody, status) => {
+    const parsed = typeof rawBody === "string" ? JSON.parse(rawBody) : {};
+
+    return {
+      status,
+      message: parsed.reason ?? "Something went wrong.",
+      error_code: parsed.code,
+    };
+  },
+});
+```
+
+# Full control with `createOryxSSEProxyHandler`
+
+`createOryxSSEProxy` handles most use cases out of the box. But you can still fully customize when you need:
+
+- Dynamic URL routing based on request parameters.
+- Custom authentication or header injection.
+- Non-standard error response formatting.
+- Full control over the upstream request.
+
+```ts
+import { createOryxSSEProxyHandler } from "@contextualai/oryx-proxy-node";
+
+export async function POST(request: Request): Promise<Response> {
+  const body = await request.json();
+
+  const oidcToken = request.headers.get("x-oidc-token");
+  const agentId = request.headers.get("x-agent-id");
+
+  const handler = createOryxSSEProxyHandler({
+    buildUpstreamRequest: async () => ({
+      url: `https://api.contextual.ai/v1/agents/${agentId}/query`,
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${oidcToken}`,
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+      },
+      data: {
+        ...body,
+        // Inject additional fields with your specific needs.
+        metadata: { source: "web" },
+      },
+    }),
+  });
+
+  return handler(request);
+}
+```
+
+# API reference: `createOryxSSEProxy`
+
+- <ParameterRow
+    name="baseUrl"
+    type="string"
+    description="Base URL for the upstream API."
+  />
+- <ParameterRow
+    name="transform"
+    type="(request) => { url: string }"
+    description="Rewrite the target path."
+  />
+- <ParameterRow
+    name="method"
+    type="string | (request) => string"
+    description="Override HTTP method. Defaults to request method."
+  />
+- <ParameterRow
+    name="extendHeaders"
+    type="(request) => HeadersInit | undefined"
+    description="Inject headers into the upstream request."
+  />
+- <ParameterRow
+    name="mapErrorBody"
+    type="(rawBody, status) => SSEErrorPayload"
+    description="Customize error event shape."
+  />
+
+# API reference: `createOryxSSEProxyHandler`
+
+- <ParameterRow
+    name="buildUpstreamRequest"
+    type="(request) => AxiosRequestConfig"
+    description="Full axios config builder."
+  />
+- <ParameterRow
+    name="mapErrorBody"
+    type="(rawBody, status) => SSEErrorPayload"
+    description="Customize error event shape."
+  />
+
+<AfterContentNavigation
+  prevLabel={"Styling Guide"}
+  prevHref={"/styling"}
+  nextLabel={"React Hooks"}
+  nextHref={"/hooks"}
+/>

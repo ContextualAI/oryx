@@ -1,0 +1,180 @@
+export const metadata = {
+  title: "React Hooks",
+  description:
+    "API reference for all React hooks provided by @contextualai/oryx-react.",
+};
+
+<DocsTitle title={"React Hooks"} backHref={"/"} />
+
+Oryx provides a set of React hooks for managing chat state, message metadata, retrieval information, and streaming status. All hooks are exported from `@contextualai/oryx-react`.
+
+# `useOryx` <AnchorTag id="use-oryx" />
+
+The primary hook for managing Oryx chat state and streaming lifecycle. Returns control functions and a `probe` object to pass into `Oryx.Root`.
+
+```tsx
+const { probe, start, stop, states } = useOryx({ fetcher });
+
+return <Oryx.Root probe={probe}>{/* ... */}</Oryx.Root>;
+```
+
+Parameters:
+
+- <ParameterRow
+    name="fetcher"
+    type="OryxChatFetcher"
+    description="The fetcher function that handles SSE streaming to your backend."
+  />
+- <ParameterRow
+    name="extras"
+    type="TExtras"
+    description="Optional extra data passed to the fetcher (e.g., agentId, auth tokens)."
+  />
+
+Returns:
+
+- <ParameterRow
+    name="probe"
+    type="OryxContextPayload"
+    description="The payload object to pass into Oryx.Root."
+  />
+- <ParameterRow
+    name="start"
+    type="(prompt: string) => void"
+    description="Start a new chat request with the given prompt."
+  />
+- <ParameterRow
+    name="stop"
+    type="() => void"
+    description="Abort any in-flight streaming immediately."
+  />
+- <ParameterRow
+    name="states"
+    type="Record<string, OryxState>"
+    description="A map of message IDs to their respective Oryx states."
+  />
+
+# `useOryxStatus` <AnchorTag id="use-oryx-status" />
+
+Exposes the streaming status and error state for the current message.
+
+> This hook must be used within `Oryx.Message.Agent` to read the status of the current message properly.
+
+```tsx
+const { isStreaming, error } = useOryxStatus();
+```
+
+- <ParameterRow
+    name="isStreaming"
+    type="boolean"
+    description="Whether the current message is actively streaming."
+  />
+- <ParameterRow
+    name="error"
+    type="OryxStreamingError | null"
+    description="Error object if the streaming pipeline failed."
+  />
+
+# `useOryxMessage` <AnchorTag id="use-oryx-message" />
+
+Returns identifiers and state for the current message.
+
+> This hook must be used within `Oryx.Message.Agent` to read the metadata of the current message properly.
+
+```tsx
+const { messageId, requestId, conversationId, state } = useOryxMessage();
+
+return (
+  <ul>
+    <li>Message ID: {messageId}</li>
+    <li>Request ID: {requestId}</li>
+    <li>Conversation ID: {conversationId}</li>
+  </ul>
+);
+```
+
+- <ParameterRow
+    name="messageId"
+    type="string"
+    description="Unique identifier for this message turn."
+  />
+- <ParameterRow
+    name="requestId"
+    type="string | null"
+    description="Upstream request ID from the API."
+  />
+- <ParameterRow
+    name="conversationId"
+    type="string | null"
+    description="Conversation thread ID, persisted across turns."
+  />
+- <ParameterRow
+    name="state"
+    type="OryxState"
+    description="Full state object with message, status, and retrieval information."
+  />
+
+# `useOryxRetrievals` <AnchorTag id="use-oryx-retrievals" />
+
+Returns the list of retrievals for the current message.
+
+> This hook must be used within `Oryx.Message.Agent` to access retrievals properly.
+
+```tsx
+const { retrievals } = useOryxRetrievals();
+```
+
+- <ParameterRow
+    name="retrievals"
+    type="OryxRetrieval[]"
+    description="Array of retrieval items for the current message."
+  />
+
+# `useOryxRetrievalItem` <AnchorTag id="use-oryx-retrieval-item" />
+
+Returns the retrieval data for the current item.
+
+> This hook must be used within `Oryx.Retrievals.List` or `Oryx.Retrievals.RawList`.
+
+```tsx
+const { retrieval } = useOryxRetrievalItem();
+```
+
+- <ParameterRow
+    name="retrieval"
+    type="OryxRetrieval"
+    description="The retrieval item data including contentId, number, type, name, and snippet."
+  />
+
+# `useOryxContext` <AnchorTag id="use-oryx-context" />
+
+Low-level hook to access the root Oryx context directly. Useful for building custom integrations outside the standard component tree.
+
+> Prefer using `useOryx` for standard use cases. This hook is for advanced scenarios only, where you want to avoid passing helper functions deeply into the component tree, or want to access all states directly.
+
+```tsx
+const { states, start, stop } = useOryxContext();
+```
+
+- <ParameterRow
+    name="states"
+    type="Record<string, OryxState>"
+    description="A map of message IDs to their respective Oryx states."
+  />
+- <ParameterRow
+    name="start"
+    type="(prompt: string) => void"
+    description="Start a new chat request with the given prompt."
+  />
+- <ParameterRow
+    name="stop"
+    type="() => void"
+    description="Stop all ongoing streaming requests."
+  />
+
+<AfterContentNavigation
+  prevLabel={"Proxy Customization"}
+  prevHref={"/proxy"}
+  nextLabel={"Advanced Usage"}
+  nextHref={"/advanced"}
+/>

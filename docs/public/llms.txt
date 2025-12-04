@@ -1,0 +1,33 @@
+# Oryx
+
+> Oryx is a native UI integration library for Contextual AI agents, built to bring agent experiences directly into your product.
+
+## Docs
+
+- [Introduction](https://oryx.contextual.ai): What Oryx is and how to get started.
+
+- [Installation](https://oryx.contextual.ai#installation): Install Oryx packages with pnpm or npm.
+
+- [Fetcher Setup](https://oryx.contextual.ai#fetcher): Create a fetcher for SSE streaming.
+
+- [Wire Up](https://oryx.contextual.ai#wire-up): Connect Oryx to your fetcher and build your UI.
+
+- [Productionization](https://oryx.contextual.ai#productionization): Proxy API requests for production security.
+
+- [Retrievals](https://oryx.contextual.ai/retrievals): Render retrieved evidence and document previews.
+
+- [Advanced Usage](https://oryx.contextual.ai/advanced): Multiple agents, conversation history, and custom behavior.
+
+- [React Hooks](https://oryx.contextual.ai/hooks): API reference for all React hooks.
+
+- [Composition Guide](https://oryx.contextual.ai/composition): Structure your chat UI with Oryx primitives.
+
+- [Styling Guide](https://oryx.contextual.ai/styling): Style your Oryx with Tailwind, CSS modules, or any CSS approach.
+
+- [Proxy Customization](https://oryx.contextual.ai/proxy): URL routing, header injection, and error mapping.
+
+## Packages
+
+- [@contextualai/oryx-react](https://www.npmjs.com/package/@contextualai/oryx-react): Unbranded React primitives for building agent UI.
+
+- [@contextualai/oryx-proxy-node](https://www.npmjs.com/package/@contextualai/oryx-proxy-node): Node.js proxy for proxying API requests.

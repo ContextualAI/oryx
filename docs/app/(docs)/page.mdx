@@ -1,0 +1,140 @@
+import { Hero } from "./hero";
+
+export const metadata = {
+  description:
+    "Integrate your application with Contextual AI agents — seamlessly, from interface to proxy, fully customizable and unbranded.",
+};
+
+<Hero />
+
+![Cover](/imgs/cover.png)
+
+# What is Oryx?
+
+Oryx is a native UI integration library for Contextual AI agents, built to bring agent experiences directly into your product. It handles the connection, logic, and data flow, so you can focus purely on your design and user experience.
+
+- Fully unstyled <span className="text-secondary">— ready to adapt to any branding, design system, or CSS framework.</span>
+- Fully composable <span className="text-secondary">— seamlessly integrate with your own UI components.</span>
+- Battery included <span className="text-secondary">— built-in proxy enforces best engineering and security practices.</span>
+- Best developer experience <span className="text-secondary">— built by our top engineers, with best practices.</span>
+
+The oryx library includes two packages:
+
+- `@contextualai/oryx-react` <span className="text-secondary">— Unbranded React primitives for building agent UI.</span>
+- `@contextualai/oryx-proxy-node` <span className="text-secondary">— Node.js proxy for proxying API requests.</span>
+
+# Step 1: Installation <AnchorTag id="installation" />
+
+For the first half of the guide, you only need `@contextualai/oryx-react`. The second package `@contextualai/oryx-proxy-node` will be used later on for shipping your application safely in production.
+
+> `@microsoft/fetch-event-source` is not required but recommended for handling SSE connections. GET request also works as long as it is proxied into POST request when sending to Contextual AI's API, but it has limitation on the search params length. Therefore, it is recommended to start SSE connection using a POST request, which is supported by `@microsoft/fetch-event-source`.
+
+```bash
+pnpm install @contextualai/oryx-react @microsoft/fetch-event-source
+```
+
+# Step 2: Create a fetcher for SSE streaming <AnchorTag id="fetcher" />
+
+Fetcher is for mapping the state management logic onto the SSE streaming connection. This is a key part of keeping the flexibility so you can use any SSE library you want, not limited to `@microsoft/fetch-event-source`, and we are using it here for an example.
+
+> During development, the `/query-endpoint` in the example below could directly point to [Contextual AI's Query API](https://docs.contextual.ai/api-reference/agents-query/query). In production, however, we strongly recommend using a proxied endpoint to prevent exposing your API key in client code. To learn more, check out the [productionization](#productionization) step.
+
+```ts
+import { fetchEventSource } from "@microsoft/fetch-event-source";
+import { type OryxChatFetcher } from "@contextualai/oryx-react";
+
+const chatFetcher: OryxChatFetcher = async (request, handlers) => {
+  // Check notes above for the guide on the URL.
+  await fetchEventSource("/query-endpoint", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messages: request.messages,
+      conversation_id: request.conversationId,
+      stream: true,
+    }),
+    onopen: handlers.onOpen,
+    onmessage: handlers.onMessage,
+    onerror: handlers.onError,
+    onclose: handlers.onClose,
+    // Signal is for handling the aborting of the request.
+    signal: handlers.signal,
+  });
+};
+```
+
+# Step 3: Wire up Oryx to your fetcher <AnchorTag id="wire-up" />
+
+After creating a fetcher with your preferred SSE library, you can connect it to Oryx to start streaming conversations directly into your UI, in just a few lines of code.
+
+> Keep in mind that this is a very minimal working example, without showing retrievals, and entirely unstyled.
+
+```tsx
+"use client";
+
+import { Oryx, useOryx } from "@contextualai/oryx-react";
+
+export function Chat() {
+  const { probe, start } = useOryx({ fetcher: chatFetcher });
+
+  return (
+    <Oryx.Root probe={probe}>
+      <button type="button" onClick={() => start("Explain this code.")}>
+        Ask
+      </button>
+
+      <Oryx.Messages.List>
+        <Oryx.Message.User />
+        <Oryx.Message.Agent render={(content) => <p>{content}</p>} />
+      </Oryx.Messages.List>
+    </Oryx.Root>
+  );
+}
+```
+
+- To render retrieved evidence and document previews, see [retrievals](/retrievals) for guidance.
+- For programmatic control like starting conversations from effects or stopping requests, see [advanced usage](/advanced).
+- To structure and style a complete interface, see [composition guide](/composition) and [styling guide](/styling).
+
+# Step 4: Proxy the API for production <AnchorTag id="productionization" />
+
+> This step is optional for local development and is strongly recommended in production for security reasons.
+
+It's the best practice to proxy API requests through your own server in production. This allows you to enforce authentication, rate limiting, and other security policies when exposing Contextual AI agents to your users — and keeps your API key safe from client-side exposure.
+
+The only exception is when using OIDC (available for enterprise plans, [contact us](https://contextual.ai/contact-us)). In that case, you can securely pass the OIDC token directly in the fetcher header, though you may still use a proxy if preferred.
+
+We provide a Node.js (TypeScript) proxy example compatible with any JavaScript runtime. You can adapt it to other languages or frameworks as needed.
+
+```bash
+# Axios is a peer dependency of oryx proxy.
+# We use it for handling SSE connection better than built-in fetch.
+pnpm install @contextualai/oryx-proxy-node axios
+```
+
+In Next.js, a single function call now exposes a POST endpoint that streams responses from Contextual AI directly to your frontend. For advanced scenarios like dynamic routing or custom error handling, see [proxy customization](/proxy).
+
+```ts
+import { createOryxSSEProxy } from "@contextualai/oryx-proxy-node";
+
+export const POST = createOryxSSEProxy({
+  baseUrl: "https://api.contextual.ai",
+  transform: (request) => ({
+    url: `/v1/agents/${process.env.CONTEXTUAL_AGENT_ID}/query`,
+  }),
+  extendHeaders: (request) => ({
+    // `request` argument is the incoming request.
+    // Any authentication logic could be added here.
+    Authorization: `Bearer ${process.env.CONTEXTUAL_API_KEY}`,
+  }),
+});
+```
+
+# Appendix: Directory <AnchorTag id="directory" />
+
+- [Retrievals](/retrievals) <span className="text-secondary">— Render retrieved evidence and document previews.</span>
+- [Composition Guide](/composition) <span className="text-secondary">— Structure your chat UI with Oryx primitives.</span>
+- [Styling Guide](/styling) <span className="text-secondary">— Style your Oryx with Tailwind, CSS modules, or any CSS approach.</span>
+- [Proxy Customization](/proxy) <span className="text-secondary">— URL routing, header injection, and error mapping.</span>
+- [React Hooks](/hooks) <span className="text-secondary">— API reference for all React hooks.</span>
+- [Advanced Usage](/advanced) <span className="text-secondary">— Programmatic control, status hooks, and message metadata.</span>

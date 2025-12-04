@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+/* ========== Standardized Styles ========= */
+
+@theme inline {
+  /* ---------- Colors ---------- */
+  --color-brand: oklch(0.546 0.21 262.801);
+  --color-primary: oklch(0.105 0.026 280.866);
+  --color-secondary: oklch(0.643 0.015 285.978);
+  --color-background: oklch(0.995 0.003 286.352);
+  --color-card: oklch(0.974 0.003 286.351);
+
+  /* ---------- Sizing ---------- */
+  --spacing-section-gap: 3.5rem;
+
+  /* ---------- Font Sizes ---------- */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.125rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.25rem;
+  --text-lg: 1rem;
+  --text-lg--line-height: 1.5rem;
+
+  /* ---------- Fonts ---------- */
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-google-sans-code);
+}
+
+/* ========== Global Styles ========== */
+
+strong {
+  @apply font-semibold;
+}
+
+* {
+  text-rendering: optimizelegibility;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  width: 100%;
+  min-height: 100svh;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  position: relative;
+}
+
+body {
+  @apply bg-background text-primary text-base;
+
+  width: 100%;
+  height: 100%;
+  overflow: clip;
+  position: relative;
+}

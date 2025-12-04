@@ -1,0 +1,129 @@
+export const metadata = {
+  title: "Advanced Usage",
+  description:
+    "Programmatic control over streaming, message states, and request lifecycle.",
+};
+
+<DocsTitle title={"Advanced Usage"} backHref={"/"} />
+
+# Starting conversations programmatically
+
+You may have a need to start a conversation automatically, such as when component is mounted. [`useOryx`](/hooks#use-oryx) provides the `start` function, where you can pass in the prompt to start the conversation.
+
+```tsx
+"use client";
+
+import { useEffect, useRef } from "react";
+import { useOryx } from "@contextualai/oryx-react";
+
+function Chat({ initialPrompt }: { initialPrompt?: string }) {
+  const { probe, start } = useOryx({ fetcher });
+  const hasStarted = useRef(false);
+
+  useEffect(() => {
+    if (initialPrompt && !hasStarted.current) {
+      hasStarted.current = true;
+      start(initialPrompt);
+    }
+  }, [initialPrompt, start]);
+
+  return <Oryx.Root probe={probe}>{/* ... */}</Oryx.Root>;
+}
+```
+
+# Stopping a request
+
+Call `stop` from [`useOryx`](/hooks#use-oryx) to abort any in-flight streaming immediately, including upstream request and connection.
+
+```tsx
+"use client";
+
+import { Oryx, useOryx } from "@contextualai/oryx-react";
+
+function Chat() {
+  const { probe, start, stop } = useOryx({ fetcher });
+
+  return (
+    <>
+      <Oryx.Root probe={probe}>{/* ... */}</Oryx.Root>
+      <button type={"button"} onClick={() => stop()}>
+        Stop
+      </button>
+    </>
+  );
+}
+```
+
+# Reading streaming status
+
+You may have a need to read the streaming status of the current message, and show some UI feedback to the user. [`useOryxStatus`](/hooks#use-oryx-status) exposes `isStreaming` and `error`.
+
+> This hook must be used under `Oryx.Message.List` to read the status of the current message properly.
+
+```tsx
+"use client";
+
+import { useOryxStatus } from "@contextualai/oryx-react";
+
+function StreamingIndicator() {
+  const { isStreaming, error } = useOryxStatus();
+
+  if (error) return <span>Error: {error.message}</span>;
+  if (isStreaming) return <span>Streaming...</span>;
+  return null;
+}
+```
+
+# Reading message metadata
+
+You may have a need to read the current message's metadata, such as message ID, request ID, conversation ID, and raw content of the message programmatically. [`useOryxMessage`](/hooks#use-oryx-message) returns identifiers and state for the current message.
+
+> This hook must be used under `Oryx.Message.List` to read the metadata of the current message properly.
+
+```tsx
+"use client";
+
+import { useOryxMessage } from "@contextualai/oryx-react";
+
+function MessageDebug() {
+  const { messageId, requestId, conversationId } = useOryxMessage();
+
+  return (
+    <ul>
+      <li>Message ID: {messageId}</li>
+      <li>Request ID: {requestId}</li>
+      <li>Conversation ID: {conversationId}</li>
+    </ul>
+  );
+}
+```
+
+# Raw retrieval list
+
+`Oryx.Retrievals.RawList` gives direct access to each retrieval object via a render prop. No hooks needed for accessing retrieval data in this case.
+
+> Please note that the `contentId` might be duplicating in rare cases. Please use `number` instead of `contentId` to ensure stable keys.
+
+```tsx
+"use client";
+
+import { Oryx } from "@contextualai/oryx-react";
+
+function CustomRetrievalList() {
+  return (
+    <Oryx.Retrievals.RawList
+      render={(retrieval) => (
+        <div
+          // Use number instead of contentId to ensure stable keys.
+          key={retrieval.number}
+        >
+          <span>{retrieval.number}.</span>
+          <span>{retrieval.name}</span>
+        </div>
+      )}
+    />
+  );
+}
+```
+
+<AfterContentNavigation prevLabel={"React Hooks"} prevHref={"/hooks"} />

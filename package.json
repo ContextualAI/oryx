@@ -1,0 +1,23 @@
+{
+  "name": "oryx",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --filter oryx-react build",
+    "dev": "pnpm --filter oryx-react dev",
+    "example": "pnpm --filter basic-usage dev",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write .",
+    "typecheck": "pnpm --filter oryx-react typecheck"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  }
+}

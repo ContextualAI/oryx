@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+- Always use `pnpm` (never npm or yarn) for any install, script, or package management tasks.

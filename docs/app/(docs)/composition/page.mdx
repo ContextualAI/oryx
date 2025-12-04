@@ -1,0 +1,161 @@
+export const metadata = {
+  title: "Composition Guide",
+  description: "Structure and compose your chat UI with Oryx primitives.",
+};
+
+<DocsTitle title={"Composition Guide"} backHref={"/"} />
+
+# Philosophy
+
+Oryx primitives are composable UI building blocks. Each renders minimal markup — you wrap them with your own components, CSS styles, layout, and logic. No opinions on structure or styling, just data flow.
+
+# Root layout
+
+A typical chat UI has three zones: header, message list, and input bar. Wrap everything in `Oryx.Root` to provide state context.
+
+```tsx
+"use client";
+
+import { Oryx, useOryx } from "@contextualai/oryx-react";
+
+function ChatLayout() {
+  const { probe, start } = useOryx({ fetcher: chatFetcher });
+
+  return (
+    <Oryx.Root probe={probe}>
+      <header>{/* Title, clear button, etc. */}</header>
+
+      <main>
+        <Oryx.Messages.List>
+          <UserMessage />
+          <AgentMessage />
+        </Oryx.Messages.List>
+      </main>
+
+      <footer>
+        <InputBar onSubmit={(text) => start(text)} />
+      </footer>
+    </Oryx.Root>
+  );
+}
+```
+
+# User message
+
+There are two ways to use `Oryx.Message.User`:
+
+1. As a pure text, then you can wrap it with your own element to control layout and style.
+2. Define the `render` prop to obtain the text as string and render it with your own component.
+
+```tsx
+// 1. As a pure text React node.
+<p className={"..."}>
+  <Oryx.Message.User />
+</p>
+
+// 2. Define the `render` prop.
+<Oryx.Message.User render={(text) => <YourComponent someProp={text} />} />
+```
+
+# Agent message
+
+In almost the same ways as `Oryx.Message.User`, there are two ways to use `Oryx.Message.Agent`:
+
+1. As a pure text, then you can wrap it with your own element to control layout and style.
+2. Define the `render` prop to obtain the text as string and render it with your own component.
+
+> It is recommended to use the `render` prop for agent messages because agent responses are formatted with markdown, and most markdown renderers take strings as input instead of a pure text React node.
+
+```tsx
+// 1. As a pure text React node.
+<p className={"..."}>
+  <Oryx.Message.Agent />
+</p>
+
+// 2. Define the `render` prop (markdown rendering is recommended).
+<Oryx.Message.Agent render={(content) => <MarkdownRenderer content={content} />} />
+```
+
+# Message toolbar
+
+Composition gives you the flexibility to choose your own way of building things. For actions like copying message content, you have two ways to do it:
+
+1. Make toolbar part of the `render` prop in agent message.
+2. Use [`useOryxMessage`](/hooks#use-oryx-message) hook to access raw content directly.
+
+```tsx
+// Method 1: Make toolbar part of the agent message `render` prop.
+<Oryx.Message.Agent
+  render={(content) => (
+    <>
+      <MarkdownRenderer content={content} />
+      <MessageToolbar content={content} />
+    </>
+  )}
+/>;
+
+// Method 2: Use hook to access raw content directly.
+const { state } = useOryxMessage();
+function handleCopy() {
+  navigator.clipboard.writeText(state.agentMessage?.content ?? "");
+}
+return (
+  <button type={"button"} onClick={handleCopy}>
+    Copy
+  </button>
+);
+```
+
+# Retrievals
+
+Retrieval components are covered in [retrievals](/retrievals). The key pattern: lift selection state to the `Oryx.Root` level, have retrieval item buttons set this state, and pass the selection to your preview panel.
+
+> It is recommended to store `contentId` and `messageId` together as a single selection object. This ensures the preview panel always references the correct message context.
+
+```tsx
+type SelectedRetrieval = {
+  contentId: string;
+  messageId: string;
+};
+
+const [selection, setSelection] = useState<SelectedRetrieval | null>(null);
+
+return (
+  <Oryx.Root probe={probe}>
+    <Oryx.Messages.List>
+      <Oryx.Message.User />
+      <RetrievalsSection onSelect={setSelection} />
+      <Oryx.Message.Agent />
+    </Oryx.Messages.List>
+
+    {selection ? (
+      <Oryx.RetrievalPreview.Root
+        contentId={selection.contentId}
+        messageId={selection.messageId}
+        fetcher={previewFetcher}
+      >
+        <Oryx.RetrievalPreview.DocumentName />
+        <Oryx.RetrievalPreview.Image />
+      </Oryx.RetrievalPreview.Root>
+    ) : null}
+  </Oryx.Root>
+);
+```
+
+# Putting it together
+
+You now have all the building blocks ready:
+
+- A root provider to provide state context.
+- Message primitives to render user and agent messages.
+- Retrieval components to render retrieval items and preview panel.
+- State patterns to manage selection and preview panel visibility.
+
+Combine them to match your layout, then head to [styling guide](/styling) to make it truly yours.
+
+<AfterContentNavigation
+  prevLabel={"Retrievals"}
+  prevHref={"/retrievals"}
+  nextLabel={"Styling Guide"}
+  nextHref={"/styling"}
+/>
