@@ -9,7 +9,7 @@ type LinkDefinition = Readonly<{
 const LINKS: LinkDefinition[] = [
   {
     label: "GitHub",
-    href: "https://github.com/contextualai/oryx",
+    href: "https://github.com/ContextualAI/oryx",
   },
   {
     label: "Directory",

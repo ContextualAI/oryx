@@ -16,7 +16,7 @@
 
 - [Retrievals](https://oryx.contextual.ai/retrievals): Render retrieved evidence and document previews.
 
-- [Advanced Usage](https://oryx.contextual.ai/advanced): Multiple agents, conversation history, and custom behavior.
+- [Advanced Usage](https://oryx.contextual.ai/advanced): Programmatic control over streaming, message states, and request lifecycle.
 
 - [React Hooks](https://oryx.contextual.ai/hooks): API reference for all React hooks.
 
