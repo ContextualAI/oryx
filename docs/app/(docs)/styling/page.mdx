@@ -17,9 +17,9 @@ Oryx is fully unstyled, so you can fully customize it with your own design syste
 
 # User message
 
-A styled message bubble with an inline stop button during streaming.
+User message is the prompt that the user has entered and been sent to the agent. It should be a simple message bubble with an inline stop button for terminating the streaming when necessary.
 
-![User message styling example](/imgs/styling-user-message.png)
+![User message styling example](/imgs/styling-user-message.gif)
 
 ```tsx
 "use client";
@@ -60,9 +60,11 @@ function UserMessage() {
 
 # Agent message
 
-A styled message container with markdown rendering.
+Agent message is the response from the agent. It should be a styled message container (without border or card) with markdown rendering.
 
-![Agent message styling example](/imgs/styling-agent-message.png)
+> If you are looking for UI solutions that don't render broken markdown during streaming, when syntax hasn't been fully completed, try [`streamdown`](https://streamdown.ai/).
+
+![Agent message styling example](/imgs/styling-agent-message.gif)
 
 ```tsx
 "use client";
@@ -84,7 +86,7 @@ function AgentMessage() {
 
 # Message toolbar
 
-A toolbar with copy button, streaming indicator, and error display.
+In our examples, message toolbar serves as a place to display streaming indicator, error message, and a copy button for copying the raw markdown content (agent message).
 
 ![Message toolbar styling example](/imgs/styling-message-toolbar.gif)
 
@@ -130,9 +132,9 @@ function AgentMessageToolbar() {
 
 # Input bar
 
-A form with textarea and submit button. Enter key submits, Shift+Enter adds a newline.
+Input bar is the form with textarea and submit button. `Enter` key submits, `Shift+Enter` adds a newline.
 
-![Input bar styling example](/imgs/styling-input-bar.png)
+![Input bar styling example](/imgs/styling-input-bar.gif)
 
 ```tsx
 "use client";
@@ -187,7 +189,7 @@ function InputBar({ value, onChange, onSubmit }: InputBarProps) {
 
 # Retrieval list
 
-A collapsible section with styled retrieval item buttons.
+Retrieval list is a collapsible section with styled retrieval item buttons.
 
 ![Retrieval list styling example](/imgs/styling-retrievals-list.gif)
 
@@ -240,7 +242,7 @@ function RetrievalsSection(props: { onSelect: (contentId: string) => void }) {
 
 # Retrieval preview panel
 
-A panel with header, close button, and styled loading/error/content states.
+Retrieval preview panel is a panel with header, close button, and styled loading, error, or content states.
 
 ![Retrieval preview panel styling example](/imgs/styling-retrieval-preview.gif)
 

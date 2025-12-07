@@ -16,7 +16,7 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <main
       className={cn(
-        "w-full max-w-154 shrink-0 grow block mx-auto px-6 pt-26 sm:pt-30",
+        "w-full max-w-body-container shrink-0 grow block mx-auto px-body-edge pt-body-head",
       )}
     >
       {children}

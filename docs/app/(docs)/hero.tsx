@@ -4,16 +4,23 @@ import Link from "next/link";
 type LinkDefinition = Readonly<{
   label: string;
   href: string;
+  external?: boolean;
 }>;
 
 const LINKS: LinkDefinition[] = [
   {
     label: "GitHub",
     href: "https://github.com/ContextualAI/oryx",
+    external: true,
   },
   {
     label: "Directory",
     href: "/#directory",
+  },
+  {
+    label: "llms.txt",
+    href: "/llms.txt",
+    external: true,
   },
 ];
 
@@ -37,7 +44,7 @@ export function Hero(): React.ReactNode {
           <Link
             key={link.href}
             href={link.href}
-            target={link.href.startsWith("http") ? "_blank" : undefined}
+            target={link.external ? "_blank" : undefined}
             className={cn(
               "text-sm underline underline-offset-2 decoration-1 transition-colors cursor-pointer",
               "text-secondary hover:text-primary focus-visible:text-primary",

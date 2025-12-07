@@ -12,6 +12,9 @@
 
   /* ---------- Sizing ---------- */
   --spacing-section-gap: 3.5rem;
+  --spacing-body-container: 38.5rem;
+  --spacing-body-edge: 1.5rem;
+  --spacing-body-head: 7.5rem;
 
   /* ---------- Font Sizes ---------- */
   --text-xs: 0.75rem;

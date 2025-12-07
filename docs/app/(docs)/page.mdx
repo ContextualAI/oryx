@@ -49,8 +49,11 @@ Fetcher is for mapping the state management logic onto the SSE streaming connect
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { type OryxChatFetcher } from "@contextualai/oryx-react";
 
-const chatFetcher: OryxChatFetcher = async (request, handlers) => {
-  // Check notes above for the guide on the URL.
+/**
+ * The chat fetcher, for query streaming.
+ * Please check the notes above for the guide on the URL.
+ */
+const fetcher: OryxChatFetcher = async (request, handlers) => {
   await fetchEventSource("/query-endpoint", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -81,7 +84,7 @@ After creating a fetcher with your preferred SSE library, you can connect it to 
 import { Oryx, useOryx } from "@contextualai/oryx-react";
 
 export function Chat() {
-  const { probe, start } = useOryx({ fetcher: chatFetcher });
+  const { probe, start } = useOryx({ fetcher });
 
   return (
     <Oryx.Root probe={probe}>
