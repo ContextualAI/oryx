@@ -4,29 +4,37 @@ This example demonstrates how to use `@contextualai/oryx-react` to build a strea
 
 ## Setup
 
-1. Install dependencies:
+1. Clone this repository:
+
+```bash
+git clone https://github.com/ContextualAI/oryx.git
+cd oryx
+```
+
+2. Install dependencies and build all packages:
 
 ```bash
 pnpm install
+pnpm build
 ```
 
-2. Create a `.env.local` file in this directory with your API credentials:
+3. Create a `.env.local` file in this directory (`examples/basic-usage/`) with your API credentials:
 
 ```
 CONTEXTUAL_AGENT_ID=your_agent_id_here
 CONTEXTUAL_API_KEY=your_api_key_here
 ```
 
-3. Run the development server:
-
-```bash
-pnpm dev
-```
-
-Or from the root of the oryx workspace:
+4. Run the development server:
 
 ```bash
 pnpm example
+```
+
+Or from this directory:
+
+```bash
+pnpm dev
 ```
 
 ## How it works

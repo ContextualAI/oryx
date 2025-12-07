@@ -1,90 +1,38 @@
-## `@contextualai/oryx-proxy-node`
+# `@contextualai/oryx-proxy-node`
 
-`@contextualai/oryx-proxy-node` is a tiny helper for proxying Server-Sent Events (SSE) from any upstream HTTP API in a Node.js environment.
+Oryx Proxy is a lightweight SSE proxy utility for forwarding requests to Contextual AI agents in Node.js environments. It keeps your API keys secure on the server while providing flexible routing and error handling.
 
-### Installation
+## Installation
 
 ```bash
-pnpm add @contextualai/oryx-proxy-node axios
+pnpm add @contextualai/oryx-proxy-node
 ```
 
-### Example: simple SSE proxy
+## Basic Usage
 
 ```ts
 import { createOryxSSEProxy } from "@contextualai/oryx-proxy-node";
 
 export const POST = createOryxSSEProxy({
   baseUrl: "https://api.contextual.ai",
-  extendHeaders: () => ({
+  // Use `transform` to map agent ID.
+  transform: (request) => ({
+    url: `/v1/agents/${process.env.CONTEXTUAL_AGENT_ID}/query`,
+  }),
+  // Use `extraHeaders` to inject authentication or other headers.
+  extendHeaders: (request) => ({
     Authorization: `Bearer ${process.env.CONTEXTUAL_API_KEY}`,
   }),
 });
 ```
 
-### Example: transform URL and validate input
+## Why Proxy?
 
-```ts
-import { createOryxSSEProxy } from "@contextualai/oryx-proxy-node";
+- **Secure your API key** — proxying keeps your API key out of the browser.
+- **Enforce authentication** — validate user sessions before forwarding requests.
+- **Route dynamically** — hardcode or select agent IDs on the server side.
+- **Rate limit on your end** — add additional layers of rate limiting using your tech stack.
 
-export const POST = createOryxSSEProxy({
-  baseUrl: "https://api.contextual.ai",
-  transform: (request) => {
-    const url = new URL(request.url);
-    const agentId = url.searchParams.get("agentId");
+## Documentation
 
-    if (!agentId) {
-      throw new Error("Missing agentId parameter.");
-    }
-
-    // /api/chat?agentId=123 -> /v1/agents/123/query.
-    return { url: `/v1/agents/${agentId}/query` };
-  },
-  extendHeaders: () => ({
-    Authorization: `Bearer ${process.env.CONTEXTUAL_API_KEY}`,
-  }),
-});
-```
-
-### Example: full control over upstream request
-
-```ts
-import { createOryxSSEProxyHandler } from "@contextualai/oryx-proxy-node";
-
-export async function POST(request: Request): Promise<Response> {
-  const body = await request.json();
-
-  const handler = createOryxSSEProxyHandler({
-    buildUpstreamRequest: async () => ({
-      url: `https://api.contextual.ai/v1/${process.env.CONTEXTUAL_AGENT_ID}/query`,
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.CONTEXTUAL_API_KEY}`,
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-      },
-      data: body,
-    }),
-  });
-
-  return handler(request);
-}
-```
-
-### Example: custom error mapping
-
-```ts
-import { createOryxSSEProxy } from "@contextualai/oryx-proxy-node";
-
-export const POST = createOryxSSEProxy({
-  baseUrl: "https://api.contextual.ai",
-  mapErrorBody: (rawBody, status) => {
-    const parsed = typeof rawBody === "string" ? JSON.parse(rawBody) : {};
-
-    return {
-      status,
-      message: parsed.reason ?? "Unknown failure.",
-      error_code: parsed.code,
-    };
-  },
-});
-```
+For detailed guides, API reference, and examples, visit the **[Oryx Documentation](https://oryx.contextual.ai/proxy)**.

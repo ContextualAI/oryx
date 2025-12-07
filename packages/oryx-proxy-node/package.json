@@ -1,9 +1,20 @@
 {
   "name": "@contextualai/oryx-proxy-node",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "license": "Apache-2.0",
-  "private": true,
+  "homepage": "https://oryx.contextual.ai/proxy",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ContextualAI/oryx.git",
+    "directory": "packages/oryx-proxy-node"
+  },
+  "bugs": {
+    "url": "https://github.com/ContextualAI/oryx/issues"
+  },
   "type": "module",
+  "files": [
+    "dist"
+  ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -20,7 +31,7 @@
     "test:watch": "jest --watch --config jest.config.mjs",
     "typecheck": "tsc --noEmit"
   },
-  "peerDependencies": {
+  "dependencies": {
     "axios": "^1.7.7"
   },
   "devDependencies": {

@@ -113,9 +113,7 @@ The only exception is when using OIDC (available for enterprise plans, [contact 
 We provide a Node.js (TypeScript) proxy example compatible with any JavaScript runtime. You can adapt it to other languages or frameworks as needed.
 
 ```bash
-# Axios is a peer dependency of oryx proxy.
-# We use it for handling SSE connection better than built-in fetch.
-pnpm install @contextualai/oryx-proxy-node axios
+pnpm install @contextualai/oryx-proxy-node
 ```
 
 In Next.js, a single function call now exposes a POST endpoint that streams responses from Contextual AI directly to your frontend. For advanced scenarios like dynamic routing or custom error handling, see [proxy customization](/proxy).
