@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { Oryx, useOryx, type OryxChatFetcher } from "@contextualai/oryx-react";
@@ -15,6 +15,7 @@ import {
   type RetrievalSelection,
 } from "@/components/retrieval-selection-context";
 import { RetrievedDocumentsSection } from "@/components/retrieval-section";
+import { IntermediateSteps } from "@/components/intermediate-steps";
 import { SquarePenIcon } from "lucide-react";
 import { cn } from "@/lib/tailwind";
 import { AgentMessageToolbar } from "@/components/agent-message-toolbar";
@@ -157,6 +158,7 @@ export function OryxChat({ prompt: initialPrompt }: OryxChatProps) {
                 }
               >
                 <RetrievedDocumentsSection />
+                <IntermediateSteps />
                 <AgentMessage />
                 <AgentMessageToolbar />
               </div>

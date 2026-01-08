@@ -15,6 +15,16 @@ export enum OryxStreamEventType {
   END = "end",
   METADATA = "metadata",
   REQUEST_ID = "request_id",
+  // Intermediate step events
+  STEPPING = "stepping",
+  STEP_START = "step_start",
+  STEP_END = "step_end",
+  TOOL_CALL_CREATED = "tool_call_created",
+  TOOL_EXECUTION_START = "tool_execution_start",
+  TOOL_CALL_END = "tool_call_end",
+  THINKING_START = "thinking_start",
+  THINKING_DELTA = "thinking_delta",
+  THINKING_END = "thinking_end",
 }
 
 export const OryxStreamEventTypeSchema = z.nativeEnum(OryxStreamEventType);
@@ -160,4 +170,106 @@ export const OryxRetrievalPreviewMetadataSchema = z.object({
    * Text of the content.
    */
   content_text: z.string(),
+});
+
+// ========== Intermediate Step Event Schemas ==========
+
+/**
+ * Stepping stage types for workflow progress.
+ */
+export const OryxSteppingStageSchema = z.enum([
+  "retrieval",
+  "generation",
+  "attribution",
+  "thinking",
+  "tool_execution",
+  "post_processing",
+  "finalization",
+]);
+
+export type OryxSteppingStage = z.infer<typeof OryxSteppingStageSchema>;
+
+/**
+ * Schema for stepping event payload (stage progress).
+ */
+export const OryxSteppingEventSchema = z.object({
+  type: OryxSteppingStageSchema.optional(),
+  stage: OryxSteppingStageSchema.optional(),
+});
+
+/**
+ * Tool call status.
+ */
+export const OryxToolCallStatusSchema = z.enum([
+  "created",
+  "executing",
+  "completed",
+  "failed",
+]);
+
+export type OryxToolCallStatus = z.infer<typeof OryxToolCallStatusSchema>;
+
+/**
+ * Schema for tool call created event payload.
+ */
+export const OryxToolCallCreatedEventSchema = z.object({
+  tool_call_id: z.string(),
+  tool_name: z.string(),
+  arguments: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Schema for tool execution start event payload.
+ */
+export const OryxToolExecutionStartEventSchema = z.object({
+  tool_call_id: z.string(),
+});
+
+/**
+ * Schema for tool call end event payload.
+ */
+export const OryxToolCallEndEventSchema = z.object({
+  tool_call_id: z.string(),
+  output: z.unknown().optional(),
+  error: z.string().optional(),
+});
+
+/**
+ * Schema for thinking start event payload.
+ */
+export const OryxThinkingStartEventSchema = z.object({
+  thinking_id: z.string().optional(),
+});
+
+/**
+ * Schema for thinking delta event payload.
+ */
+export const OryxThinkingDeltaEventSchema = z.object({
+  thinking_id: z.string().optional(),
+  delta: z.string(),
+});
+
+/**
+ * Schema for thinking end event payload.
+ */
+export const OryxThinkingEndEventSchema = z.object({
+  thinking_id: z.string().optional(),
+  summary: z.string().optional(),
+});
+
+/**
+ * Schema for step start event payload.
+ */
+export const OryxStepStartEventSchema = z.object({
+  step_id: z.string(),
+  step_name: z.string().optional(),
+  step_type: z.string().optional(),
+});
+
+/**
+ * Schema for step end event payload.
+ */
+export const OryxStepEndEventSchema = z.object({
+  step_id: z.string(),
+  status: z.enum(["completed", "failed", "cancelled"]).optional(),
 });

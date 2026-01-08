@@ -197,3 +197,115 @@ export function useOryxStatus() {
     error: state.error,
   };
 }
+
+/**
+ * Hook to access the current workflow stage.
+ */
+export function useOryxCurrentStage() {
+  const { state } = useOryxMessageContext();
+  return {
+    currentStage: state.currentStage,
+  };
+}
+
+/**
+ * Hook to access tool calls for the current message.
+ */
+export function useOryxToolCalls() {
+  const { state } = useOryxMessageContext();
+  return {
+    toolCalls: state.toolCalls,
+    hasToolCalls: state.toolCalls.length > 0,
+    activeToolCalls: state.toolCalls.filter(
+      (tc) => tc.status === "created" || tc.status === "executing",
+    ),
+    completedToolCalls: state.toolCalls.filter(
+      (tc) => tc.status === "completed",
+    ),
+    failedToolCalls: state.toolCalls.filter((tc) => tc.status === "failed"),
+  };
+}
+
+/**
+ * Hook to access thinking steps for the current message.
+ */
+export function useOryxThinking() {
+  const { state } = useOryxMessageContext();
+  return {
+    thinkingSteps: state.thinkingSteps,
+    hasThinking: state.thinkingSteps.length > 0,
+    activeThinking: state.thinkingSteps.filter((ts) => !ts.isCompleted),
+    completedThinking: state.thinkingSteps.filter((ts) => ts.isCompleted),
+    /**
+     * The most recent thinking step (useful for showing current thinking).
+     */
+    currentThinking:
+      state.thinkingSteps[state.thinkingSteps.length - 1] ?? null,
+  };
+}
+
+/**
+ * Hook to access workflow steps for the current message.
+ */
+export function useOryxWorkflowSteps() {
+  const { state } = useOryxMessageContext();
+  return {
+    workflowSteps: state.workflowSteps,
+    hasWorkflowSteps: state.workflowSteps.length > 0,
+    activeSteps: state.workflowSteps.filter((ws) => ws.status === "running"),
+    completedSteps: state.workflowSteps.filter(
+      (ws) => ws.status === "completed",
+    ),
+    failedSteps: state.workflowSteps.filter((ws) => ws.status === "failed"),
+    /**
+     * The most recent workflow step.
+     */
+    currentStep: state.workflowSteps[state.workflowSteps.length - 1] ?? null,
+  };
+}
+
+/**
+ * Hook to access all intermediate steps (tool calls, thinking, workflow) in chronological order.
+ * Useful for building a unified "trajectory" or "activity log" view.
+ */
+export function useOryxIntermediateSteps() {
+  const { state } = useOryxMessageContext();
+
+  const allSteps = useMemo(() => {
+    const steps: Array<
+      | {
+          type: "tool_call";
+          data: (typeof state.toolCalls)[0];
+          timestamp: number;
+        }
+      | {
+          type: "thinking";
+          data: (typeof state.thinkingSteps)[0];
+          timestamp: number;
+        }
+      | {
+          type: "workflow";
+          data: (typeof state.workflowSteps)[0];
+          timestamp: number;
+        }
+    > = [];
+
+    for (const tc of state.toolCalls) {
+      steps.push({ type: "tool_call", data: tc, timestamp: tc.createdAt });
+    }
+    for (const ts of state.thinkingSteps) {
+      steps.push({ type: "thinking", data: ts, timestamp: ts.startedAt });
+    }
+    for (const ws of state.workflowSteps) {
+      steps.push({ type: "workflow", data: ws, timestamp: ws.startedAt });
+    }
+
+    return steps.sort((a, b) => a.timestamp - b.timestamp);
+  }, [state.toolCalls, state.thinkingSteps, state.workflowSteps]);
+
+  return {
+    steps: allSteps,
+    hasSteps: allSteps.length > 0,
+    currentStage: state.currentStage,
+  };
+}

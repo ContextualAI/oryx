@@ -7,6 +7,9 @@ import {
   OryxRetrieval,
   OryxRetrievalPreviewMetadata,
   OryxState,
+  OryxToolCall,
+  OryxThinkingStep,
+  OryxWorkflowStep,
 } from "./core/types";
 
 // ========== Chat Context ==========
@@ -84,6 +87,42 @@ export type OryxRetrievalItemContextPayload = {
 export const OryxRetrievalItemContext =
   createContext<OryxRetrievalItemContextPayload | null>(null);
 
+// ========== Tool Call Item Context ==========
+
+export type OryxToolCallItemContextPayload = {
+  /**
+   * The tool call data.
+   */
+  toolCall: OryxToolCall;
+};
+
+export const OryxToolCallItemContext =
+  createContext<OryxToolCallItemContextPayload | null>(null);
+
+// ========== Thinking Step Item Context ==========
+
+export type OryxThinkingStepItemContextPayload = {
+  /**
+   * The thinking step data.
+   */
+  thinkingStep: OryxThinkingStep;
+};
+
+export const OryxThinkingStepItemContext =
+  createContext<OryxThinkingStepItemContextPayload | null>(null);
+
+// ========== Workflow Step Item Context ==========
+
+export type OryxWorkflowStepItemContextPayload = {
+  /**
+   * The workflow step data.
+   */
+  workflowStep: OryxWorkflowStep;
+};
+
+export const OryxWorkflowStepItemContext =
+  createContext<OryxWorkflowStepItemContextPayload | null>(null);
+
 // ========== Provider ==========
 
 type OryxProviderProps = {
@@ -160,6 +199,63 @@ export function OryxRetrievalItemProvider({
   );
 }
 
+type OryxToolCallItemProviderProps = {
+  payload: OryxToolCallItemContextPayload;
+  children: React.ReactNode;
+};
+
+/**
+ * Provider component for a single tool call item context.
+ */
+export function OryxToolCallItemProvider({
+  payload,
+  children,
+}: OryxToolCallItemProviderProps): JSX.Element {
+  return (
+    <OryxToolCallItemContext.Provider value={payload}>
+      {children}
+    </OryxToolCallItemContext.Provider>
+  );
+}
+
+type OryxThinkingStepItemProviderProps = {
+  payload: OryxThinkingStepItemContextPayload;
+  children: React.ReactNode;
+};
+
+/**
+ * Provider component for a single thinking step item context.
+ */
+export function OryxThinkingStepItemProvider({
+  payload,
+  children,
+}: OryxThinkingStepItemProviderProps): JSX.Element {
+  return (
+    <OryxThinkingStepItemContext.Provider value={payload}>
+      {children}
+    </OryxThinkingStepItemContext.Provider>
+  );
+}
+
+type OryxWorkflowStepItemProviderProps = {
+  payload: OryxWorkflowStepItemContextPayload;
+  children: React.ReactNode;
+};
+
+/**
+ * Provider component for a single workflow step item context.
+ */
+export function OryxWorkflowStepItemProvider({
+  payload,
+  children,
+}: OryxWorkflowStepItemProviderProps): JSX.Element {
+  return (
+    <OryxWorkflowStepItemContext.Provider value={payload}>
+      {children}
+    </OryxWorkflowStepItemContext.Provider>
+  );
+}
+
 // ========== Hooks ==========
 
 /**
@@ -212,6 +308,60 @@ export function useOryxRetrievalItemContext(
       componentName
         ? `Oryx retrieval component \`${componentName}\` must be used inside \`Oryx.Retrievals.List\` or \`Oryx.Retrievals.RawList\`.`
         : "Oryx retrieval component must be used inside `Oryx.Retrievals.List` or `Oryx.Retrievals.RawList`.",
+    );
+  }
+  return context;
+}
+
+/**
+ * Hook to access the Oryx tool call item context.
+ * @param componentName - Optional component name for better error messages.
+ */
+export function useOryxToolCallItemContext(
+  componentName?: string,
+): OryxToolCallItemContextPayload {
+  const context = useContext(OryxToolCallItemContext);
+  if (!context) {
+    throw new Error(
+      componentName
+        ? `Oryx tool call component \`${componentName}\` must be used inside \`Oryx.ToolCalls.List\`.`
+        : "Oryx tool call component must be used inside `Oryx.ToolCalls.List`.",
+    );
+  }
+  return context;
+}
+
+/**
+ * Hook to access the Oryx thinking step item context.
+ * @param componentName - Optional component name for better error messages.
+ */
+export function useOryxThinkingStepItemContext(
+  componentName?: string,
+): OryxThinkingStepItemContextPayload {
+  const context = useContext(OryxThinkingStepItemContext);
+  if (!context) {
+    throw new Error(
+      componentName
+        ? `Oryx thinking component \`${componentName}\` must be used inside \`Oryx.Thinking.List\`.`
+        : "Oryx thinking component must be used inside `Oryx.Thinking.List`.",
+    );
+  }
+  return context;
+}
+
+/**
+ * Hook to access the Oryx workflow step item context.
+ * @param componentName - Optional component name for better error messages.
+ */
+export function useOryxWorkflowStepItemContext(
+  componentName?: string,
+): OryxWorkflowStepItemContextPayload {
+  const context = useContext(OryxWorkflowStepItemContext);
+  if (!context) {
+    throw new Error(
+      componentName
+        ? `Oryx workflow step component \`${componentName}\` must be used inside \`Oryx.WorkflowSteps.List\`.`
+        : "Oryx workflow step component must be used inside `Oryx.WorkflowSteps.List`.",
     );
   }
   return context;
