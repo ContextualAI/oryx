@@ -4,14 +4,14 @@ import {
   OryxMessageCompleteEventSchema,
   OryxMessageDeltaEventSchema,
   OryxMetadataEventSchema,
+  OryxQueryReformulationEventSchema,
   OryxRequestIdEventSchema,
   OryxRetrievalEventSchema,
   OryxStreamEventType,
   OryxStreamEventTypeSchema,
   OryxStreamingErrorEventSchema,
   OryxSteppingEventSchema,
-  OryxToolCallCreatedEventSchema,
-  OryxToolExecutionStartEventSchema,
+  OryxToolCallStartEventSchema,
   OryxToolCallEndEventSchema,
   OryxThinkingStartEventSchema,
   OryxThinkingDeltaEventSchema,
@@ -228,6 +228,20 @@ export function mapEventToAction({
       };
     }
 
+    // ---------- Query Reformulation ----------
+    case OryxStreamEventType.QUERY_REFORMULATION: {
+      const parsed = OryxQueryReformulationEventSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.error("Invalid query_reformulation payload:", parsed.error);
+        return null;
+      }
+      return {
+        messageId,
+        type: "QUERY_REFORMULATION_RECEIVED",
+        payload: { reformulatedQuery: parsed.data.reformulated_query },
+      };
+    }
+
     // ---------- Stepping (Stage Progress) ----------
     case OryxStreamEventType.STEPPING: {
       const parsed = OryxSteppingEventSchema.safeParse(payload);
@@ -235,46 +249,34 @@ export function mapEventToAction({
         console.error("Invalid stepping payload:", parsed.error);
         return null;
       }
-      const stage = parsed.data.type ?? parsed.data.stage;
-      if (!stage) {
-        return null;
-      }
       return {
         messageId,
         type: "STAGE_CHANGED",
-        payload: { stage },
+        payload: { stage: parsed.data.type },
       };
     }
 
-    // ---------- Tool Call Created ----------
-    case OryxStreamEventType.TOOL_CALL_CREATED: {
-      const parsed = OryxToolCallCreatedEventSchema.safeParse(payload);
+    // ---------- Tool Call Start ----------
+    case OryxStreamEventType.TOOL_CALL_START: {
+      const parsed = OryxToolCallStartEventSchema.safeParse(payload);
       if (!parsed.success) {
-        console.error("Invalid tool_call_created payload:", parsed.error);
+        console.error("Invalid tool_call_start payload:", parsed.error);
         return null;
       }
-      return {
-        messageId,
-        type: "TOOL_CALL_CREATED",
-        payload: {
-          toolCallId: parsed.data.tool_call_id,
-          toolName: parsed.data.tool_name,
-          arguments: parsed.data.arguments,
-        },
-      };
-    }
-
-    // ---------- Tool Execution Start ----------
-    case OryxStreamEventType.TOOL_EXECUTION_START: {
-      const parsed = OryxToolExecutionStartEventSchema.safeParse(payload);
-      if (!parsed.success) {
-        console.error("Invalid tool_execution_start payload:", parsed.error);
-        return null;
+      let args: Record<string, unknown> | undefined;
+      try {
+        args = JSON.parse(parsed.data.tool_args);
+      } catch {
+        args = { raw: parsed.data.tool_args };
       }
       return {
         messageId,
         type: "TOOL_EXECUTION_STARTED",
-        payload: { toolCallId: parsed.data.tool_call_id },
+        payload: {
+          toolCallId: parsed.data.tool_id,
+          toolName: parsed.data.tool_name,
+          arguments: args,
+        },
       };
     }
 
@@ -289,9 +291,9 @@ export function mapEventToAction({
         messageId,
         type: "TOOL_CALL_COMPLETED",
         payload: {
-          toolCallId: parsed.data.tool_call_id,
-          output: parsed.data.output,
-          error: parsed.data.error,
+          toolCallId: parsed.data.tool_id,
+          output: parsed.data.tool_output,
+          error: parsed.data.successful ? undefined : parsed.data.error,
         },
       };
     }
@@ -306,9 +308,7 @@ export function mapEventToAction({
       return {
         messageId,
         type: "THINKING_STARTED",
-        payload: {
-          thinkingId: parsed.data.thinking_id ?? `thinking-${Date.now()}`,
-        },
+        payload: { thinkingId: parsed.data.think_id },
       };
     }
 
@@ -323,7 +323,7 @@ export function mapEventToAction({
         messageId,
         type: "THINKING_DELTA",
         payload: {
-          thinkingId: parsed.data.thinking_id ?? "default",
+          thinkingId: parsed.data.think_id ?? "default",
           delta: parsed.data.delta,
         },
       };
@@ -340,8 +340,8 @@ export function mapEventToAction({
         messageId,
         type: "THINKING_COMPLETED",
         payload: {
-          thinkingId: parsed.data.thinking_id ?? "default",
-          summary: parsed.data.summary,
+          thinkingId: parsed.data.think_id,
+          summary: parsed.data.thinking_summary,
         },
       };
     }

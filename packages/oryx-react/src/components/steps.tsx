@@ -65,9 +65,7 @@ export function OryxToolCallsListView({
   let toolCalls = state.toolCalls;
   
   if (filter === "active") {
-    toolCalls = toolCalls.filter(
-      (tc) => tc.status === "created" || tc.status === "executing",
-    );
+    toolCalls = toolCalls.filter((tc) => tc.status === "executing");
   } else if (filter === "completed") {
     toolCalls = toolCalls.filter((tc) => tc.status === "completed");
   } else if (filter === "failed") {

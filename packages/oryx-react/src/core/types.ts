@@ -196,6 +196,11 @@ export type OryxState = {
   requestId: string | null;
   conversationId: string | null;
   /**
+   * The reformulated query being used for retrieval.
+   * Shows what the system is actually searching for.
+   */
+  reformulatedQuery: string | null;
+  /**
    * Current workflow stage (e.g., "retrieval", "generation", "attribution").
    */
   currentStage: OryxSteppingStage | null;
@@ -244,17 +249,20 @@ export type OryxAction =
           payload: { retrievals: OryxRetrieval[] };
         }
       | { type: "REQUEST_ID_RECEIVED"; payload: { requestId: string } }
+      | {
+          type: "QUERY_REFORMULATION_RECEIVED";
+          payload: { reformulatedQuery: string };
+        }
       // Intermediate step actions
       | { type: "STAGE_CHANGED"; payload: { stage: OryxSteppingStage } }
       | {
-          type: "TOOL_CALL_CREATED";
+          type: "TOOL_EXECUTION_STARTED";
           payload: {
             toolCallId: string;
             toolName: string;
             arguments?: Record<string, unknown>;
           };
         }
-      | { type: "TOOL_EXECUTION_STARTED"; payload: { toolCallId: string } }
       | {
           type: "TOOL_CALL_COMPLETED";
           payload: { toolCallId: string; output?: unknown; error?: string };

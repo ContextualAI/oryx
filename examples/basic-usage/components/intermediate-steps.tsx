@@ -118,7 +118,6 @@ function ToolCallItem() {
         <Oryx.ToolCall.Status
           render={(status) => {
             switch (status) {
-              case "created":
               case "executing":
                 return (
                   <LoaderCircleIcon
@@ -150,7 +149,6 @@ function ToolCallItem() {
                 status === "executing" && "bg-blue-100 text-blue-700",
                 status === "completed" && "bg-green-100 text-green-700",
                 status === "failed" && "bg-red-100 text-red-700",
-                status === "created" && "bg-neutral-200 text-neutral-600",
               )}
             >
               {status}
@@ -280,7 +278,7 @@ function ThinkingStepItem() {
           />
           <Oryx.Thinking.Content
             render={(content) => (
-              <div className="text-purple-800 whitespace-pre-wrap break-words">
+              <div className="text-purple-800 whitespace-pre-wrap wrap-break">
                 {content}
               </div>
             )}

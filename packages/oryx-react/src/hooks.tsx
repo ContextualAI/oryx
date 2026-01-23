@@ -4,7 +4,13 @@ import { useCallback, useMemo, useReducer, useRef } from "react";
 import { OryxContextPayload, useOryxMessageContext } from "./context";
 import { INTERNAL_PENDING_MESSAGE_ID_PLACEHOLDER } from "./core/constants";
 import { oryxReducer } from "./core/reducer";
-import { OryxAction, OryxChatFetcher } from "./core/types";
+import {
+  OryxAction,
+  OryxChatFetcher,
+  OryxToolCall,
+  OryxThinkingStep,
+  OryxWorkflowStep,
+} from "./core/types";
 import {
   mapErrorEventToAction,
   mapEventToAction,
@@ -217,7 +223,7 @@ export function useOryxToolCalls() {
     toolCalls: state.toolCalls,
     hasToolCalls: state.toolCalls.length > 0,
     activeToolCalls: state.toolCalls.filter(
-      (tc) => tc.status === "created" || tc.status === "executing",
+      (tc) => tc.status === "executing",
     ),
     completedToolCalls: state.toolCalls.filter(
       (tc) => tc.status === "completed",
@@ -265,47 +271,43 @@ export function useOryxWorkflowSteps() {
 }
 
 /**
+ * A single intermediate step entry (tool call, thinking, or workflow).
+ */
+export type OryxIntermediateStep =
+  | { type: "tool_call"; data: OryxToolCall; timestamp: number }
+  | { type: "thinking"; data: OryxThinkingStep; timestamp: number }
+  | { type: "workflow"; data: OryxWorkflowStep; timestamp: number };
+
+/**
  * Hook to access all intermediate steps (tool calls, thinking, workflow) in chronological order.
  * Useful for building a unified "trajectory" or "activity log" view.
  */
 export function useOryxIntermediateSteps() {
   const { state } = useOryxMessageContext();
 
-  const allSteps = useMemo(() => {
-    const steps: Array<
-      | {
-          type: "tool_call";
-          data: (typeof state.toolCalls)[0];
-          timestamp: number;
-        }
-      | {
-          type: "thinking";
-          data: (typeof state.thinkingSteps)[0];
-          timestamp: number;
-        }
-      | {
-          type: "workflow";
-          data: (typeof state.workflowSteps)[0];
-          timestamp: number;
-        }
-    > = [];
-
-    for (const tc of state.toolCalls) {
-      steps.push({ type: "tool_call", data: tc, timestamp: tc.createdAt });
-    }
-    for (const ts of state.thinkingSteps) {
-      steps.push({ type: "thinking", data: ts, timestamp: ts.startedAt });
-    }
-    for (const ws of state.workflowSteps) {
-      steps.push({ type: "workflow", data: ws, timestamp: ws.startedAt });
-    }
-
-    return steps.sort((a, b) => a.timestamp - b.timestamp);
+  const steps = useMemo<OryxIntermediateStep[]>(() => {
+    return [
+      ...state.toolCalls.map((tc) => ({
+        type: "tool_call" as const,
+        data: tc,
+        timestamp: tc.createdAt,
+      })),
+      ...state.thinkingSteps.map((ts) => ({
+        type: "thinking" as const,
+        data: ts,
+        timestamp: ts.startedAt,
+      })),
+      ...state.workflowSteps.map((ws) => ({
+        type: "workflow" as const,
+        data: ws,
+        timestamp: ws.startedAt,
+      })),
+    ].sort((a, b) => a.timestamp - b.timestamp);
   }, [state.toolCalls, state.thinkingSteps, state.workflowSteps]);
 
   return {
-    steps: allSteps,
-    hasSteps: allSteps.length > 0,
+    steps,
+    hasSteps: steps.length > 0,
     currentStage: state.currentStage,
   };
 }

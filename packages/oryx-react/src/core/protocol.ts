@@ -8,23 +8,26 @@ import { z } from "zod";
  * Stream event types supported by Oryx.
  */
 export enum OryxStreamEventType {
+  // Core events
+  METADATA = "metadata",
+  REQUEST_ID = "request_id",
+  QUERY_REFORMULATION = "query_reformulation",
   RETRIEVALS = "retrievals",
   MESSAGE_DELTA = "message_delta",
   MESSAGE_COMPLETE = "message_complete",
+  STEPPING = "stepping",
   ERROR = "error",
   END = "end",
-  METADATA = "metadata",
-  REQUEST_ID = "request_id",
-  // Intermediate step events
-  STEPPING = "stepping",
-  STEP_START = "step_start",
-  STEP_END = "step_end",
-  TOOL_CALL_CREATED = "tool_call_created",
-  TOOL_EXECUTION_START = "tool_execution_start",
+  // Tool call events
+  TOOL_CALL_START = "tool_call_start",
   TOOL_CALL_END = "tool_call_end",
+  // Thinking events
   THINKING_START = "thinking_start",
   THINKING_DELTA = "thinking_delta",
   THINKING_END = "thinking_end",
+  // Workflow step events (generic)
+  STEP_START = "step_start",
+  STEP_END = "step_end",
 }
 
 export const OryxStreamEventTypeSchema = z.nativeEnum(OryxStreamEventType);
@@ -115,6 +118,14 @@ export const OryxRequestIdEventSchema = z.object({
   request_id: z.string(),
 });
 
+/**
+ * Schema for query_reformulation event payload.
+ * Shows what query the system is actually searching for.
+ */
+export const OryxQueryReformulationEventSchema = z.object({
+  reformulated_query: z.string(),
+});
+
 // ========== Stream Payload Schemas ==========
 
 /**
@@ -176,13 +187,12 @@ export const OryxRetrievalPreviewMetadataSchema = z.object({
 
 /**
  * Stepping stage types for workflow progress.
+ * Matches sunrise StreamSteppingType.
  */
 export const OryxSteppingStageSchema = z.enum([
   "retrieval",
   "generation",
   "attribution",
-  "thinking",
-  "tool_execution",
   "post_processing",
   "finalization",
 ]);
@@ -191,17 +201,17 @@ export type OryxSteppingStage = z.infer<typeof OryxSteppingStageSchema>;
 
 /**
  * Schema for stepping event payload (stage progress).
+ * Matches sunrise: type + extras.
  */
 export const OryxSteppingEventSchema = z.object({
-  type: OryxSteppingStageSchema.optional(),
-  stage: OryxSteppingStageSchema.optional(),
+  type: OryxSteppingStageSchema,
+  extras: z.record(z.unknown()).optional(),
 });
 
 /**
  * Tool call status.
  */
 export const OryxToolCallStatusSchema = z.enum([
-  "created",
   "executing",
   "completed",
   "failed",
@@ -210,51 +220,58 @@ export const OryxToolCallStatusSchema = z.enum([
 export type OryxToolCallStatus = z.infer<typeof OryxToolCallStatusSchema>;
 
 /**
- * Schema for tool call created event payload.
+ * Schema for tool call start event payload.
+ * Matches sunrise backend: tool_id, tool_name, tool_args (JSON string).
  */
-export const OryxToolCallCreatedEventSchema = z.object({
-  tool_call_id: z.string(),
+export const OryxToolCallStartEventSchema = z.object({
+  tool_id: z.string(),
   tool_name: z.string(),
-  arguments: z.record(z.unknown()).optional(),
-});
-
-/**
- * Schema for tool execution start event payload.
- */
-export const OryxToolExecutionStartEventSchema = z.object({
-  tool_call_id: z.string(),
+  tool_args: z.string(),
+  agent_id: z.string().optional(),
+  timestamp: z.unknown().optional(),
 });
 
 /**
  * Schema for tool call end event payload.
+ * Matches sunrise backend.
  */
 export const OryxToolCallEndEventSchema = z.object({
-  tool_call_id: z.string(),
-  output: z.unknown().optional(),
-  error: z.string().optional(),
+  tool_id: z.string(),
+  tool_output: z.string(),
+  successful: z.boolean(),
+  error: z.string(),
+  agent_id: z.string().optional(),
+  timestamp: z.unknown().optional(),
 });
 
 /**
  * Schema for thinking start event payload.
+ * Matches sunrise backend: think_id.
  */
 export const OryxThinkingStartEventSchema = z.object({
-  thinking_id: z.string().optional(),
+  think_id: z.string(),
+  agent_id: z.string().optional(),
+  timestamp: z.unknown().optional(),
 });
 
 /**
  * Schema for thinking delta event payload.
+ * For streaming thinking content.
  */
 export const OryxThinkingDeltaEventSchema = z.object({
-  thinking_id: z.string().optional(),
+  think_id: z.string().optional(),
   delta: z.string(),
 });
 
 /**
  * Schema for thinking end event payload.
+ * Matches sunrise backend: think_id, thinking_summary.
  */
 export const OryxThinkingEndEventSchema = z.object({
-  thinking_id: z.string().optional(),
-  summary: z.string().optional(),
+  think_id: z.string(),
+  thinking_summary: z.string(),
+  agent_id: z.string().optional(),
+  timestamp: z.unknown().optional(),
 });
 
 /**

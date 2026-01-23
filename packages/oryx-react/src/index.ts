@@ -197,6 +197,7 @@ export {
   useOryxThinking,
   useOryxWorkflowSteps,
   useOryxIntermediateSteps,
+  type OryxIntermediateStep,
 } from "./hooks";
 
 export {

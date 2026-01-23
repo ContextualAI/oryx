@@ -32,6 +32,7 @@ export function oryxReducer(
         error: null,
         requestId: null,
         conversationId: null,
+        reformulatedQuery: null,
         currentStage: null,
         toolCalls: [],
         thinkingSteps: [],
@@ -146,6 +147,15 @@ export function oryxReducer(
         },
       };
     }
+    case "QUERY_REFORMULATION_RECEIVED": {
+      return {
+        ...states,
+        [action.messageId]: {
+          ...prev,
+          reformulatedQuery: action.payload.reformulatedQuery,
+        },
+      };
+    }
 
     // ---------- Intermediate Step Actions ----------
 
@@ -159,12 +169,12 @@ export function oryxReducer(
       };
     }
 
-    case "TOOL_CALL_CREATED": {
+    case "TOOL_EXECUTION_STARTED": {
       const newToolCall: OryxToolCall = {
         id: action.payload.toolCallId,
         name: action.payload.toolName,
         arguments: action.payload.arguments,
-        status: "created",
+        status: "executing",
         createdAt: Date.now(),
       };
       return {
@@ -172,21 +182,6 @@ export function oryxReducer(
         [action.messageId]: {
           ...prev,
           toolCalls: [...prev.toolCalls, newToolCall],
-        },
-      };
-    }
-
-    case "TOOL_EXECUTION_STARTED": {
-      const updatedToolCalls = prev.toolCalls.map((tc) =>
-        tc.id === action.payload.toolCallId
-          ? { ...tc, status: "executing" as const }
-          : tc,
-      );
-      return {
-        ...states,
-        [action.messageId]: {
-          ...prev,
-          toolCalls: updatedToolCalls,
         },
       };
     }
