@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useMemo, useReducer, useRef } from "react";
-import { OryxContextPayload, useOryxMessageContext } from "./context";
+import type { OryxContextPayload } from "./context";
+import { useOryxMessageContext } from "./context";
 import { INTERNAL_PENDING_MESSAGE_ID_PLACEHOLDER } from "./core/constants";
 import { oryxReducer } from "./core/reducer";
-import {
+import type {
   OryxAction,
   OryxChatFetcher,
   OryxToolCall,
@@ -219,17 +220,20 @@ export function useOryxCurrentStage() {
  */
 export function useOryxToolCalls() {
   const { state } = useOryxMessageContext();
-  return {
-    toolCalls: state.toolCalls,
-    hasToolCalls: state.toolCalls.length > 0,
-    activeToolCalls: state.toolCalls.filter(
-      (tc) => tc.status === "executing",
-    ),
-    completedToolCalls: state.toolCalls.filter(
-      (tc) => tc.status === "completed",
-    ),
-    failedToolCalls: state.toolCalls.filter((tc) => tc.status === "failed"),
-  };
+  return useMemo(
+    () => ({
+      toolCalls: state.toolCalls,
+      hasToolCalls: state.toolCalls.length > 0,
+      activeToolCalls: state.toolCalls.filter(
+        (tc) => tc.status === "executing",
+      ),
+      completedToolCalls: state.toolCalls.filter(
+        (tc) => tc.status === "completed",
+      ),
+      failedToolCalls: state.toolCalls.filter((tc) => tc.status === "failed"),
+    }),
+    [state.toolCalls],
+  );
 }
 
 /**
@@ -237,17 +241,20 @@ export function useOryxToolCalls() {
  */
 export function useOryxThinking() {
   const { state } = useOryxMessageContext();
-  return {
-    thinkingSteps: state.thinkingSteps,
-    hasThinking: state.thinkingSteps.length > 0,
-    activeThinking: state.thinkingSteps.filter((ts) => !ts.isCompleted),
-    completedThinking: state.thinkingSteps.filter((ts) => ts.isCompleted),
-    /**
-     * The most recent thinking step (useful for showing current thinking).
-     */
-    currentThinking:
-      state.thinkingSteps[state.thinkingSteps.length - 1] ?? null,
-  };
+  return useMemo(
+    () => ({
+      thinkingSteps: state.thinkingSteps,
+      hasThinking: state.thinkingSteps.length > 0,
+      activeThinking: state.thinkingSteps.filter((ts) => !ts.isCompleted),
+      completedThinking: state.thinkingSteps.filter((ts) => ts.isCompleted),
+      /**
+       * The most recent thinking step (useful for showing current thinking).
+       */
+      currentThinking:
+        state.thinkingSteps[state.thinkingSteps.length - 1] ?? null,
+    }),
+    [state.thinkingSteps],
+  );
 }
 
 /**
@@ -255,19 +262,22 @@ export function useOryxThinking() {
  */
 export function useOryxWorkflowSteps() {
   const { state } = useOryxMessageContext();
-  return {
-    workflowSteps: state.workflowSteps,
-    hasWorkflowSteps: state.workflowSteps.length > 0,
-    activeSteps: state.workflowSteps.filter((ws) => ws.status === "running"),
-    completedSteps: state.workflowSteps.filter(
-      (ws) => ws.status === "completed",
-    ),
-    failedSteps: state.workflowSteps.filter((ws) => ws.status === "failed"),
-    /**
-     * The most recent workflow step.
-     */
-    currentStep: state.workflowSteps[state.workflowSteps.length - 1] ?? null,
-  };
+  return useMemo(
+    () => ({
+      workflowSteps: state.workflowSteps,
+      hasWorkflowSteps: state.workflowSteps.length > 0,
+      activeSteps: state.workflowSteps.filter((ws) => ws.status === "running"),
+      completedSteps: state.workflowSteps.filter(
+        (ws) => ws.status === "completed",
+      ),
+      failedSteps: state.workflowSteps.filter((ws) => ws.status === "failed"),
+      /**
+       * The most recent workflow step.
+       */
+      currentStep: state.workflowSteps[state.workflowSteps.length - 1] ?? null,
+    }),
+    [state.workflowSteps],
+  );
 }
 
 /**

@@ -226,15 +226,12 @@ export function oryxReducer(
     }
 
     case "THINKING_DELTA": {
-      const updatedThinkingSteps = prev.thinkingSteps.map((ts) =>
-        ts.id === action.payload.thinkingId
-          ? { ...ts, content: ts.content + action.payload.delta }
-          : ts,
+      const existingStepIndex = prev.thinkingSteps.findIndex(
+        (ts) => ts.id === action.payload.thinkingId,
       );
+
       // If no matching thinking step exists, create one
-      if (
-        !prev.thinkingSteps.some((ts) => ts.id === action.payload.thinkingId)
-      ) {
+      if (existingStepIndex === -1) {
         const newThinkingStep: OryxThinkingStep = {
           id: action.payload.thinkingId,
           content: action.payload.delta,
@@ -249,6 +246,13 @@ export function oryxReducer(
           },
         };
       }
+
+      // Update existing step
+      const updatedThinkingSteps = prev.thinkingSteps.map((ts) =>
+        ts.id === action.payload.thinkingId
+          ? { ...ts, content: ts.content + action.payload.delta }
+          : ts,
+      );
       return {
         ...states,
         [action.messageId]: {

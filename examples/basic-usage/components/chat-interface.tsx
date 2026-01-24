@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { Oryx, useOryx, type OryxChatFetcher } from "@contextualai/oryx-react";

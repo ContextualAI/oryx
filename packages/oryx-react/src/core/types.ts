@@ -3,9 +3,8 @@ import { z } from "zod";
 import {
   OryxStaticErrorSchema,
   OryxRetrievalPreviewMetadataSchema,
-  OryxSteppingStage,
-  OryxToolCallStatus,
 } from "./protocol";
+import type { OryxSteppingStage, OryxToolCallStatus } from "./protocol";
 
 // ========== Retrieval Types ==========
 

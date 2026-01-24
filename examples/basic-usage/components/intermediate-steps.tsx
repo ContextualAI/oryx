@@ -33,8 +33,6 @@ export function CurrentStageIndicator() {
     retrieval: "Retrieving documents...",
     generation: "Generating response...",
     attribution: "Adding attributions...",
-    thinking: "Thinking...",
-    tool_execution: "Running tools...",
     post_processing: "Post-processing...",
     finalization: "Finalizing...",
   };

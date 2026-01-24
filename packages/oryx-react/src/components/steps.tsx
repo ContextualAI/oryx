@@ -10,8 +10,8 @@ import {
   useOryxThinkingStepItemContext,
   useOryxWorkflowStepItemContext,
 } from "../context";
-import { OryxSteppingStage } from "../core/protocol";
-import { OryxToolCall, OryxThinkingStep, OryxWorkflowStep } from "../core/types";
+import type { OryxSteppingStage } from "../core/protocol";
+import type { OryxToolCall, OryxThinkingStep, OryxWorkflowStep } from "../core/types";
 
 // ========== Current Stage ==========
 
@@ -48,6 +48,9 @@ type OryxToolCallsListViewProps = {
   children?: React.ReactNode;
   /**
    * Filter to show only tool calls with specific statuses.
+   * - "active" shows tool calls with status "executing"
+   * - "completed" shows tool calls with status "completed"
+   * - "failed" shows tool calls with status "failed"
    */
   filter?: "all" | "active" | "completed" | "failed";
 };
@@ -273,8 +276,11 @@ type OryxWorkflowStepsListViewProps = {
   children?: React.ReactNode;
   /**
    * Filter to show only workflow steps with specific statuses.
+   * - "active" shows steps with status "running"
+   * - "completed" shows steps with status "completed"
+   * - "failed" shows steps with status "failed"
    */
-  filter?: "all" | "running" | "completed" | "failed";
+  filter?: "all" | "active" | "completed" | "failed";
 };
 
 /**
@@ -288,8 +294,8 @@ export function OryxWorkflowStepsListView({
   const { state } = useOryxMessageContext();
 
   let workflowSteps = state.workflowSteps;
-  
-  if (filter === "running") {
+
+  if (filter === "active") {
     workflowSteps = workflowSteps.filter((ws) => ws.status === "running");
   } else if (filter === "completed") {
     workflowSteps = workflowSteps.filter((ws) => ws.status === "completed");
