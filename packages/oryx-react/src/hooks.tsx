@@ -1,10 +1,17 @@
 "use client";
 
 import { useCallback, useMemo, useReducer, useRef } from "react";
-import { OryxContextPayload, useOryxMessageContext } from "./context";
+import type { OryxContextPayload } from "./context";
+import { useOryxMessageContext } from "./context";
 import { INTERNAL_PENDING_MESSAGE_ID_PLACEHOLDER } from "./core/constants";
 import { oryxReducer } from "./core/reducer";
-import { OryxAction, OryxChatFetcher } from "./core/types";
+import type {
+  OryxAction,
+  OryxChatFetcher,
+  OryxToolCall,
+  OryxThinkingStep,
+  OryxWorkflowStep,
+} from "./core/types";
 import {
   mapErrorEventToAction,
   mapEventToAction,
@@ -195,5 +202,122 @@ export function useOryxStatus() {
   return {
     isStreaming: state.isStreaming,
     error: state.error,
+  };
+}
+
+/**
+ * Hook to access the current workflow stage.
+ */
+export function useOryxCurrentStage() {
+  const { state } = useOryxMessageContext();
+  return {
+    currentStage: state.currentStage,
+  };
+}
+
+/**
+ * Hook to access tool calls for the current message.
+ */
+export function useOryxToolCalls() {
+  const { state } = useOryxMessageContext();
+  return useMemo(
+    () => ({
+      toolCalls: state.toolCalls,
+      hasToolCalls: state.toolCalls.length > 0,
+      activeToolCalls: state.toolCalls.filter(
+        (tc) => tc.status === "executing",
+      ),
+      completedToolCalls: state.toolCalls.filter(
+        (tc) => tc.status === "completed",
+      ),
+      failedToolCalls: state.toolCalls.filter((tc) => tc.status === "failed"),
+    }),
+    [state.toolCalls],
+  );
+}
+
+/**
+ * Hook to access thinking steps for the current message.
+ */
+export function useOryxThinking() {
+  const { state } = useOryxMessageContext();
+  return useMemo(
+    () => ({
+      thinkingSteps: state.thinkingSteps,
+      hasThinking: state.thinkingSteps.length > 0,
+      activeThinking: state.thinkingSteps.filter((ts) => !ts.isCompleted),
+      completedThinking: state.thinkingSteps.filter((ts) => ts.isCompleted),
+      /**
+       * The most recent thinking step (useful for showing current thinking).
+       */
+      currentThinking:
+        state.thinkingSteps[state.thinkingSteps.length - 1] ?? null,
+    }),
+    [state.thinkingSteps],
+  );
+}
+
+/**
+ * Hook to access workflow steps for the current message.
+ */
+export function useOryxWorkflowSteps() {
+  const { state } = useOryxMessageContext();
+  return useMemo(
+    () => ({
+      workflowSteps: state.workflowSteps,
+      hasWorkflowSteps: state.workflowSteps.length > 0,
+      activeSteps: state.workflowSteps.filter((ws) => ws.status === "running"),
+      completedSteps: state.workflowSteps.filter(
+        (ws) => ws.status === "completed",
+      ),
+      failedSteps: state.workflowSteps.filter((ws) => ws.status === "failed"),
+      /**
+       * The most recent workflow step.
+       */
+      currentStep: state.workflowSteps[state.workflowSteps.length - 1] ?? null,
+    }),
+    [state.workflowSteps],
+  );
+}
+
+/**
+ * A single intermediate step entry (tool call, thinking, or workflow).
+ */
+export type OryxIntermediateStep =
+  | { type: "tool_call"; data: OryxToolCall; timestamp: number }
+  | { type: "thinking"; data: OryxThinkingStep; timestamp: number }
+  | { type: "workflow"; data: OryxWorkflowStep; timestamp: number };
+
+/**
+ * Hook to access all intermediate steps (tool calls, thinking, workflow) in chronological order.
+ * Useful for building a unified "trajectory" or "activity log" view.
+ */
+export function useOryxIntermediateSteps() {
+  const { state } = useOryxMessageContext();
+
+  const steps = useMemo<OryxIntermediateStep[]>(() => {
+    return [
+      ...state.toolCalls.map((tc) => ({
+        type: "tool_call" as const,
+        data: tc,
+        timestamp: tc.createdAt,
+      })),
+      ...state.thinkingSteps.map((ts) => ({
+        type: "thinking" as const,
+        data: ts,
+        timestamp: ts.startedAt,
+      })),
+      ...state.workflowSteps.map((ws) => ({
+        type: "workflow" as const,
+        data: ws,
+        timestamp: ws.startedAt,
+      })),
+    ].sort((a, b) => a.timestamp - b.timestamp);
+  }, [state.toolCalls, state.thinkingSteps, state.workflowSteps]);
+
+  return {
+    steps,
+    hasSteps: steps.length > 0,
+    currentStage: state.currentStage,
   };
 }

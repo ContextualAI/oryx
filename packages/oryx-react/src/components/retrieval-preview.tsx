@@ -61,6 +61,11 @@ const EMPTY_STATE: OryxState = {
   error: null,
   requestId: null,
   conversationId: null,
+  reformulatedQuery: null,
+  currentStage: null,
+  toolCalls: [],
+  thinkingSteps: [],
+  workflowSteps: [],
 };
 
 /**

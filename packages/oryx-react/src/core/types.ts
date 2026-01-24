@@ -4,6 +4,7 @@ import {
   OryxStaticErrorSchema,
   OryxRetrievalPreviewMetadataSchema,
 } from "./protocol";
+import type { OryxSteppingStage, OryxToolCallStatus } from "./protocol";
 
 // ========== Retrieval Types ==========
 
@@ -80,6 +81,106 @@ export type OryxStreamingError = {
   code?: string;
 };
 
+// ========== Intermediate Step Types ==========
+
+/**
+ * Represents a tool call during agent execution.
+ */
+export type OryxToolCall = {
+  /**
+   * Unique identifier for the tool call.
+   */
+  id: string;
+  /**
+   * The name of the tool being called.
+   */
+  name: string;
+  /**
+   * The arguments passed to the tool.
+   */
+  arguments?: Record<string, unknown>;
+  /**
+   * The output returned by the tool.
+   */
+  output?: unknown;
+  /**
+   * Current status of the tool call.
+   */
+  status: OryxToolCallStatus;
+  /**
+   * Error message if the tool call failed.
+   */
+  error?: string;
+  /**
+   * Timestamp when the tool call was created.
+   */
+  createdAt: number;
+  /**
+   * Timestamp when the tool call completed.
+   */
+  completedAt?: number;
+};
+
+/**
+ * Represents a thinking/reasoning step during agent execution.
+ */
+export type OryxThinkingStep = {
+  /**
+   * Unique identifier for the thinking step.
+   */
+  id: string;
+  /**
+   * The accumulated thinking content.
+   */
+  content: string;
+  /**
+   * Summary of the thinking (if available).
+   */
+  summary?: string;
+  /**
+   * Whether the thinking step is complete.
+   */
+  isCompleted: boolean;
+  /**
+   * Timestamp when the thinking step started.
+   */
+  startedAt: number;
+  /**
+   * Timestamp when the thinking step completed.
+   */
+  completedAt?: number;
+};
+
+/**
+ * Represents a workflow step during agent execution.
+ */
+export type OryxWorkflowStep = {
+  /**
+   * Unique identifier for the step.
+   */
+  id: string;
+  /**
+   * The name of the step.
+   */
+  name?: string;
+  /**
+   * The type of the step.
+   */
+  type?: string;
+  /**
+   * Status of the step.
+   */
+  status: "running" | "completed" | "failed" | "cancelled";
+  /**
+   * Timestamp when the step started.
+   */
+  startedAt: number;
+  /**
+   * Timestamp when the step completed.
+   */
+  completedAt?: number;
+};
+
 // ========== State & Actions ==========
 
 /**
@@ -93,6 +194,27 @@ export type OryxState = {
   error: OryxStreamingError | null;
   requestId: string | null;
   conversationId: string | null;
+  /**
+   * The reformulated query being used for retrieval.
+   * Shows what the system is actually searching for.
+   */
+  reformulatedQuery: string | null;
+  /**
+   * Current workflow stage (e.g., "retrieval", "generation", "attribution").
+   */
+  currentStage: OryxSteppingStage | null;
+  /**
+   * Tool calls made during this message.
+   */
+  toolCalls: OryxToolCall[];
+  /**
+   * Thinking/reasoning steps during this message.
+   */
+  thinkingSteps: OryxThinkingStep[];
+  /**
+   * Workflow steps during this message.
+   */
+  workflowSteps: OryxWorkflowStep[];
 };
 
 /**
@@ -126,6 +248,44 @@ export type OryxAction =
           payload: { retrievals: OryxRetrieval[] };
         }
       | { type: "REQUEST_ID_RECEIVED"; payload: { requestId: string } }
+      | {
+          type: "QUERY_REFORMULATION_RECEIVED";
+          payload: { reformulatedQuery: string };
+        }
+      // Intermediate step actions
+      | { type: "STAGE_CHANGED"; payload: { stage: OryxSteppingStage } }
+      | {
+          type: "TOOL_EXECUTION_STARTED";
+          payload: {
+            toolCallId: string;
+            toolName: string;
+            arguments?: Record<string, unknown>;
+          };
+        }
+      | {
+          type: "TOOL_CALL_COMPLETED";
+          payload: { toolCallId: string; output?: unknown; error?: string };
+        }
+      | { type: "THINKING_STARTED"; payload: { thinkingId: string } }
+      | {
+          type: "THINKING_DELTA";
+          payload: { thinkingId: string; delta: string };
+        }
+      | {
+          type: "THINKING_COMPLETED";
+          payload: { thinkingId: string; summary?: string };
+        }
+      | {
+          type: "WORKFLOW_STEP_STARTED";
+          payload: { stepId: string; name?: string; type?: string };
+        }
+      | {
+          type: "WORKFLOW_STEP_COMPLETED";
+          payload: {
+            stepId: string;
+            status?: "completed" | "failed" | "cancelled";
+          };
+        }
     ));
 
 // ========== Fetcher Types ==========

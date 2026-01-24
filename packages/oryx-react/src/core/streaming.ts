@@ -4,11 +4,20 @@ import {
   OryxMessageCompleteEventSchema,
   OryxMessageDeltaEventSchema,
   OryxMetadataEventSchema,
+  OryxQueryReformulationEventSchema,
   OryxRequestIdEventSchema,
   OryxRetrievalEventSchema,
   OryxStreamEventType,
   OryxStreamEventTypeSchema,
   OryxStreamingErrorEventSchema,
+  OryxSteppingEventSchema,
+  OryxToolCallStartEventSchema,
+  OryxToolCallEndEventSchema,
+  OryxThinkingStartEventSchema,
+  OryxThinkingDeltaEventSchema,
+  OryxThinkingEndEventSchema,
+  OryxStepStartEventSchema,
+  OryxStepEndEventSchema,
 } from "./protocol";
 import { mapRetrievalEventPayloadToOryxRetrievals } from "./retrievals";
 import { OryxAction, OryxSSEMessage, OryxStreamingError } from "./types";
@@ -112,7 +121,7 @@ export function parseStreamEvent(message: OryxSSEMessage): {
   const parsedEventType = OryxStreamEventTypeSchema.safeParse(payload.event);
   if (!parsedEventType.success) {
     // Handle known informational events that don't need state changes
-    if (payload.event === "stepping" || payload.event === "attributions") {
+    if (payload.event === "attributions") {
       // Silently ignore these informational events because they are known.
       return null;
     }
@@ -216,6 +225,159 @@ export function mapEventToAction({
         messageId,
         type: "REQUEST_ID_RECEIVED",
         payload: { requestId: parsed.data.request_id },
+      };
+    }
+
+    // ---------- Query Reformulation ----------
+    case OryxStreamEventType.QUERY_REFORMULATION: {
+      const parsed = OryxQueryReformulationEventSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.error("Invalid query_reformulation payload:", parsed.error);
+        return null;
+      }
+      return {
+        messageId,
+        type: "QUERY_REFORMULATION_RECEIVED",
+        payload: { reformulatedQuery: parsed.data.reformulated_query },
+      };
+    }
+
+    // ---------- Stepping (Stage Progress) ----------
+    case OryxStreamEventType.STEPPING: {
+      const parsed = OryxSteppingEventSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.error("Invalid stepping payload:", parsed.error);
+        return null;
+      }
+      return {
+        messageId,
+        type: "STAGE_CHANGED",
+        payload: { stage: parsed.data.type },
+      };
+    }
+
+    // ---------- Tool Call Start ----------
+    case OryxStreamEventType.TOOL_CALL_START: {
+      const parsed = OryxToolCallStartEventSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.error("Invalid tool_call_start payload:", parsed.error);
+        return null;
+      }
+      let args: Record<string, unknown> | undefined;
+      try {
+        args = JSON.parse(parsed.data.tool_args);
+      } catch {
+        args = { raw: parsed.data.tool_args };
+      }
+      return {
+        messageId,
+        type: "TOOL_EXECUTION_STARTED",
+        payload: {
+          toolCallId: parsed.data.tool_id,
+          toolName: parsed.data.tool_name,
+          arguments: args,
+        },
+      };
+    }
+
+    // ---------- Tool Call End ----------
+    case OryxStreamEventType.TOOL_CALL_END: {
+      const parsed = OryxToolCallEndEventSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.error("Invalid tool_call_end payload:", parsed.error);
+        return null;
+      }
+      return {
+        messageId,
+        type: "TOOL_CALL_COMPLETED",
+        payload: {
+          toolCallId: parsed.data.tool_id,
+          output: parsed.data.tool_output,
+          error: parsed.data.successful ? undefined : parsed.data.error,
+        },
+      };
+    }
+
+    // ---------- Thinking Start ----------
+    case OryxStreamEventType.THINKING_START: {
+      const parsed = OryxThinkingStartEventSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.error("Invalid thinking_start payload:", parsed.error);
+        return null;
+      }
+      return {
+        messageId,
+        type: "THINKING_STARTED",
+        payload: { thinkingId: parsed.data.think_id },
+      };
+    }
+
+    // ---------- Thinking Delta ----------
+    case OryxStreamEventType.THINKING_DELTA: {
+      const parsed = OryxThinkingDeltaEventSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.error("Invalid thinking_delta payload:", parsed.error);
+        return null;
+      }
+      return {
+        messageId,
+        type: "THINKING_DELTA",
+        payload: {
+          thinkingId: parsed.data.think_id ?? "default",
+          delta: parsed.data.delta,
+        },
+      };
+    }
+
+    // ---------- Thinking End ----------
+    case OryxStreamEventType.THINKING_END: {
+      const parsed = OryxThinkingEndEventSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.error("Invalid thinking_end payload:", parsed.error);
+        return null;
+      }
+      return {
+        messageId,
+        type: "THINKING_COMPLETED",
+        payload: {
+          thinkingId: parsed.data.think_id,
+          summary: parsed.data.thinking_summary,
+        },
+      };
+    }
+
+    // ---------- Step Start ----------
+    case OryxStreamEventType.STEP_START: {
+      const parsed = OryxStepStartEventSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.error("Invalid step_start payload:", parsed.error);
+        return null;
+      }
+      return {
+        messageId,
+        type: "WORKFLOW_STEP_STARTED",
+        payload: {
+          stepId: parsed.data.step_id,
+          name: parsed.data.step_name,
+          type: parsed.data.step_type,
+        },
+      };
+    }
+
+    // ---------- Step End ----------
+    case OryxStreamEventType.STEP_END: {
+      const parsed = OryxStepEndEventSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.error("Invalid step_end payload:", parsed.error);
+        return null;
+      }
+      return {
+        messageId,
+        type: "WORKFLOW_STEP_COMPLETED",
+        payload: {
+          stepId: parsed.data.step_id,
+          status: parsed.data.status,
+        },
       };
     }
 

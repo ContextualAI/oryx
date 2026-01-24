@@ -15,6 +15,7 @@ import {
   type RetrievalSelection,
 } from "@/components/retrieval-selection-context";
 import { RetrievedDocumentsSection } from "@/components/retrieval-section";
+import { IntermediateSteps } from "@/components/intermediate-steps";
 import { SquarePenIcon } from "lucide-react";
 import { cn } from "@/lib/tailwind";
 import { AgentMessageToolbar } from "@/components/agent-message-toolbar";
@@ -157,6 +158,7 @@ export function OryxChat({ prompt: initialPrompt }: OryxChatProps) {
                 }
               >
                 <RetrievedDocumentsSection />
+                <IntermediateSteps />
                 <AgentMessage />
                 <AgentMessageToolbar />
               </div>

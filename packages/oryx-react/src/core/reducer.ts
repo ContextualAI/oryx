@@ -1,5 +1,12 @@
 import { INTERNAL_PENDING_MESSAGE_ID_PLACEHOLDER } from "./constants";
-import { OryxAction, OryxState, OryxStates } from "./types";
+import {
+  OryxAction,
+  OryxState,
+  OryxStates,
+  OryxToolCall,
+  OryxThinkingStep,
+  OryxWorkflowStep,
+} from "./types";
 
 /**
  * Reducer that manages the streaming lifecycle.
@@ -25,6 +32,11 @@ export function oryxReducer(
         error: null,
         requestId: null,
         conversationId: null,
+        reformulatedQuery: null,
+        currentStage: null,
+        toolCalls: [],
+        thinkingSteps: [],
+        workflowSteps: [],
       },
     };
   }
@@ -135,6 +147,177 @@ export function oryxReducer(
         },
       };
     }
+    case "QUERY_REFORMULATION_RECEIVED": {
+      return {
+        ...states,
+        [action.messageId]: {
+          ...prev,
+          reformulatedQuery: action.payload.reformulatedQuery,
+        },
+      };
+    }
+
+    // ---------- Intermediate Step Actions ----------
+
+    case "STAGE_CHANGED": {
+      return {
+        ...states,
+        [action.messageId]: {
+          ...prev,
+          currentStage: action.payload.stage,
+        },
+      };
+    }
+
+    case "TOOL_EXECUTION_STARTED": {
+      const newToolCall: OryxToolCall = {
+        id: action.payload.toolCallId,
+        name: action.payload.toolName,
+        arguments: action.payload.arguments,
+        status: "executing",
+        createdAt: Date.now(),
+      };
+      return {
+        ...states,
+        [action.messageId]: {
+          ...prev,
+          toolCalls: [...prev.toolCalls, newToolCall],
+        },
+      };
+    }
+
+    case "TOOL_CALL_COMPLETED": {
+      const updatedToolCalls = prev.toolCalls.map((tc) =>
+        tc.id === action.payload.toolCallId
+          ? {
+              ...tc,
+              status: action.payload.error
+                ? ("failed" as const)
+                : ("completed" as const),
+              output: action.payload.output,
+              error: action.payload.error,
+              completedAt: Date.now(),
+            }
+          : tc,
+      );
+      return {
+        ...states,
+        [action.messageId]: {
+          ...prev,
+          toolCalls: updatedToolCalls,
+        },
+      };
+    }
+
+    case "THINKING_STARTED": {
+      const newThinkingStep: OryxThinkingStep = {
+        id: action.payload.thinkingId,
+        content: "",
+        isCompleted: false,
+        startedAt: Date.now(),
+      };
+      return {
+        ...states,
+        [action.messageId]: {
+          ...prev,
+          thinkingSteps: [...prev.thinkingSteps, newThinkingStep],
+        },
+      };
+    }
+
+    case "THINKING_DELTA": {
+      const existingStepIndex = prev.thinkingSteps.findIndex(
+        (ts) => ts.id === action.payload.thinkingId,
+      );
+
+      // If no matching thinking step exists, create one
+      if (existingStepIndex === -1) {
+        const newThinkingStep: OryxThinkingStep = {
+          id: action.payload.thinkingId,
+          content: action.payload.delta,
+          isCompleted: false,
+          startedAt: Date.now(),
+        };
+        return {
+          ...states,
+          [action.messageId]: {
+            ...prev,
+            thinkingSteps: [...prev.thinkingSteps, newThinkingStep],
+          },
+        };
+      }
+
+      // Update existing step
+      const updatedThinkingSteps = prev.thinkingSteps.map((ts) =>
+        ts.id === action.payload.thinkingId
+          ? { ...ts, content: ts.content + action.payload.delta }
+          : ts,
+      );
+      return {
+        ...states,
+        [action.messageId]: {
+          ...prev,
+          thinkingSteps: updatedThinkingSteps,
+        },
+      };
+    }
+
+    case "THINKING_COMPLETED": {
+      const updatedThinkingSteps = prev.thinkingSteps.map((ts) =>
+        ts.id === action.payload.thinkingId
+          ? {
+              ...ts,
+              isCompleted: true,
+              summary: action.payload.summary,
+              completedAt: Date.now(),
+            }
+          : ts,
+      );
+      return {
+        ...states,
+        [action.messageId]: {
+          ...prev,
+          thinkingSteps: updatedThinkingSteps,
+        },
+      };
+    }
+
+    case "WORKFLOW_STEP_STARTED": {
+      const newWorkflowStep: OryxWorkflowStep = {
+        id: action.payload.stepId,
+        name: action.payload.name,
+        type: action.payload.type,
+        status: "running",
+        startedAt: Date.now(),
+      };
+      return {
+        ...states,
+        [action.messageId]: {
+          ...prev,
+          workflowSteps: [...prev.workflowSteps, newWorkflowStep],
+        },
+      };
+    }
+
+    case "WORKFLOW_STEP_COMPLETED": {
+      const updatedWorkflowSteps = prev.workflowSteps.map((ws) =>
+        ws.id === action.payload.stepId
+          ? {
+              ...ws,
+              status: action.payload.status ?? ("completed" as const),
+              completedAt: Date.now(),
+            }
+          : ws,
+      );
+      return {
+        ...states,
+        [action.messageId]: {
+          ...prev,
+          workflowSteps: updatedWorkflowSteps,
+        },
+      };
+    }
+
     default:
       return states;
   }
