@@ -1,11 +1,11 @@
 {
   "name": "@contextualai/oryx-react",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "Apache-2.0",
   "homepage": "https://oryx.contextual.ai",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ContextualAI/oryx.git",
+    "url": "git+https://github.com/ContextualAI/oryx.git",
     "directory": "packages/oryx-react"
   },
   "bugs": {
