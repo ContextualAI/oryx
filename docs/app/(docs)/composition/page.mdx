@@ -142,6 +142,21 @@ return (
 );
 ```
 
+# Intermediate steps
+
+Intermediate step components are covered in [intermediate steps](/intermediate-steps). These let you show what the agent is doing during execution: tool calls, thinking/reasoning, and workflow progress.
+
+Place intermediate step components inside your message list, typically before `Oryx.Message.Agent`:
+
+```tsx
+<Oryx.Messages.List>
+  <Oryx.Message.User />
+  <RetrievalsSection onSelect={setSelection} />
+  <IntermediateStepsSection />
+  <Oryx.Message.Agent render={(content) => <MarkdownRenderer content={content} />} />
+</Oryx.Messages.List>
+```
+
 # Putting it together
 
 You now have all the building blocks ready:
@@ -149,13 +164,14 @@ You now have all the building blocks ready:
 - A root provider to provide state context.
 - Message primitives to render user and agent messages.
 - Retrieval components to render retrieval items and preview panel.
+- Intermediate step components to show agent activity.
 - State patterns to manage selection and preview panel visibility.
 
 Combine them to match your layout, then head to [styling guide](/styling) to make it truly yours.
 
 <AfterContentNavigation
-  prevLabel={"Retrievals"}
-  prevHref={"/retrievals"}
+  prevLabel={"Intermediate Steps"}
+  prevHref={"/intermediate-steps"}
   nextLabel={"Styling Guide"}
   nextHref={"/styling"}
 />
