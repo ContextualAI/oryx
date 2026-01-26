@@ -172,6 +172,209 @@ const { states, start, stop } = useOryxContext();
     description="Stop all ongoing streaming requests."
   />
 
+# `useOryxCurrentStage` <AnchorTag id="use-oryx-current-stage" />
+
+Returns the current workflow stage for the message being processed.
+
+> This hook must be used within `Oryx.Message.Agent` to read the current stage properly.
+
+```tsx
+const { currentStage } = useOryxCurrentStage();
+```
+
+- <ParameterRow
+    name="currentStage"
+    type="OryxSteppingStage | null"
+    description="Current workflow stage: 'retrieval', 'generation', 'attribution', 'post_processing', or 'finalization'."
+  />
+
+# `useOryxToolCalls` <AnchorTag id="use-oryx-tool-calls" />
+
+Returns tool call information for the current message, including filtering helpers.
+
+> This hook must be used within `Oryx.Message.Agent` to access tool calls properly.
+
+```tsx
+const { toolCalls, hasToolCalls, activeToolCalls, completedToolCalls, failedToolCalls } = useOryxToolCalls();
+```
+
+- <ParameterRow
+    name="toolCalls"
+    type="OryxToolCall[]"
+    description="Array of all tool calls for the current message."
+  />
+- <ParameterRow
+    name="hasToolCalls"
+    type="boolean"
+    description="Whether there are any tool calls."
+  />
+- <ParameterRow
+    name="activeToolCalls"
+    type="OryxToolCall[]"
+    description="Tool calls currently executing."
+  />
+- <ParameterRow
+    name="completedToolCalls"
+    type="OryxToolCall[]"
+    description="Tool calls that completed successfully."
+  />
+- <ParameterRow
+    name="failedToolCalls"
+    type="OryxToolCall[]"
+    description="Tool calls that failed."
+  />
+
+# `useOryxToolCallItem` <AnchorTag id="use-oryx-tool-call-item" />
+
+Returns the tool call data for the current item.
+
+> This hook must be used within `Oryx.ToolCalls.List`.
+
+```tsx
+const { toolCall } = useOryxToolCallItem();
+```
+
+- <ParameterRow
+    name="toolCall"
+    type="OryxToolCall"
+    description="The tool call item data including id, name, arguments, output, status, and error."
+  />
+
+# `useOryxThinking` <AnchorTag id="use-oryx-thinking" />
+
+Returns thinking/reasoning step information for the current message.
+
+> This hook must be used within `Oryx.Message.Agent` to access thinking steps properly.
+
+```tsx
+const { thinkingSteps, hasThinking, activeThinking, completedThinking, currentThinking } = useOryxThinking();
+```
+
+- <ParameterRow
+    name="thinkingSteps"
+    type="OryxThinkingStep[]"
+    description="Array of all thinking steps for the current message."
+  />
+- <ParameterRow
+    name="hasThinking"
+    type="boolean"
+    description="Whether there are any thinking steps."
+  />
+- <ParameterRow
+    name="activeThinking"
+    type="OryxThinkingStep[]"
+    description="Thinking steps still in progress."
+  />
+- <ParameterRow
+    name="completedThinking"
+    type="OryxThinkingStep[]"
+    description="Thinking steps that have completed."
+  />
+- <ParameterRow
+    name="currentThinking"
+    type="OryxThinkingStep | null"
+    description="The most recent thinking step (useful for showing current thinking)."
+  />
+
+# `useOryxThinkingStepItem` <AnchorTag id="use-oryx-thinking-step-item" />
+
+Returns the thinking step data for the current item.
+
+> This hook must be used within `Oryx.Thinking.List`.
+
+```tsx
+const { thinkingStep } = useOryxThinkingStepItem();
+```
+
+- <ParameterRow
+    name="thinkingStep"
+    type="OryxThinkingStep"
+    description="The thinking step item data including id, content, summary, and isCompleted."
+  />
+
+# `useOryxWorkflowSteps` <AnchorTag id="use-oryx-workflow-steps" />
+
+Returns workflow step information for the current message.
+
+> This hook must be used within `Oryx.Message.Agent` to access workflow steps properly.
+
+```tsx
+const { workflowSteps, hasWorkflowSteps, activeSteps, completedSteps, failedSteps, currentStep } = useOryxWorkflowSteps();
+```
+
+- <ParameterRow
+    name="workflowSteps"
+    type="OryxWorkflowStep[]"
+    description="Array of all workflow steps for the current message."
+  />
+- <ParameterRow
+    name="hasWorkflowSteps"
+    type="boolean"
+    description="Whether there are any workflow steps."
+  />
+- <ParameterRow
+    name="activeSteps"
+    type="OryxWorkflowStep[]"
+    description="Workflow steps currently running."
+  />
+- <ParameterRow
+    name="completedSteps"
+    type="OryxWorkflowStep[]"
+    description="Workflow steps that completed successfully."
+  />
+- <ParameterRow
+    name="failedSteps"
+    type="OryxWorkflowStep[]"
+    description="Workflow steps that failed."
+  />
+- <ParameterRow
+    name="currentStep"
+    type="OryxWorkflowStep | null"
+    description="The most recent workflow step."
+  />
+
+# `useOryxWorkflowStepItem` <AnchorTag id="use-oryx-workflow-step-item" />
+
+Returns the workflow step data for the current item.
+
+> This hook must be used within `Oryx.WorkflowSteps.List`.
+
+```tsx
+const { workflowStep } = useOryxWorkflowStepItem();
+```
+
+- <ParameterRow
+    name="workflowStep"
+    type="OryxWorkflowStep"
+    description="The workflow step item data including id, name, type, and status."
+  />
+
+# `useOryxIntermediateSteps` <AnchorTag id="use-oryx-intermediate-steps" />
+
+Returns all intermediate steps (tool calls, thinking, workflow) in chronological order. Useful for building a unified activity log or trajectory view.
+
+> This hook must be used within `Oryx.Message.Agent` to access intermediate steps properly.
+
+```tsx
+const { steps, hasSteps, currentStage } = useOryxIntermediateSteps();
+```
+
+- <ParameterRow
+    name="steps"
+    type="OryxIntermediateStep[]"
+    description="Array of all intermediate steps sorted by timestamp. Each step has a type ('tool_call', 'thinking', or 'workflow'), data, and timestamp."
+  />
+- <ParameterRow
+    name="hasSteps"
+    type="boolean"
+    description="Whether there are any intermediate steps."
+  />
+- <ParameterRow
+    name="currentStage"
+    type="OryxSteppingStage | null"
+    description="Current workflow stage."
+  />
+
 <AfterContentNavigation
   prevLabel={"Proxy Customization"}
   prevHref={"/proxy"}

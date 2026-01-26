@@ -1,0 +1,394 @@
+export const metadata = {
+  title: "Intermediate Steps",
+  description:
+    "Render tool calls, thinking steps, and workflow progress with @contextualai/oryx-react.",
+};
+
+<DocsTitle title={"Intermediate Steps"} backHref={"/"} />
+
+Oryx provides components to render intermediate steps during agent execution, including tool calls, thinking/reasoning, and workflow progress. These help users understand what the agent is doing behind the scenes.
+
+# Showing the current stage
+
+Use `Oryx.CurrentStage` to display the current workflow stage (e.g., "retrieval", "generation", "attribution").
+
+```tsx
+"use client";
+
+import { Oryx, useOryxCurrentStage, useOryxStatus } from "@contextualai/oryx-react";
+
+function CurrentStageIndicator() {
+  const { currentStage } = useOryxCurrentStage();
+  const { isStreaming } = useOryxStatus();
+
+  if (!isStreaming || !currentStage) {
+    return null;
+  }
+
+  const stageLabels: Record<string, string> = {
+    retrieval: "Retrieving documents...",
+    generation: "Generating response...",
+    attribution: "Adding attributions...",
+    post_processing: "Post-processing...",
+    finalization: "Finalizing...",
+  };
+
+  return (
+    <div className="stage-indicator">
+      {stageLabels[currentStage] ?? currentStage}
+    </div>
+  );
+}
+```
+
+Alternatively, use the component directly with a render prop:
+
+```tsx
+<Oryx.CurrentStage
+  render={(stage) => (
+    <span>{stage}</span>
+  )}
+/>
+```
+
+# Showing tool calls
+
+Use `Oryx.ToolCalls.*` to render lists of tool executions and `Oryx.ToolCall.*` to render per-item fields such as name, status, arguments, output, and errors.
+
+- In the example below, [`useOryxToolCallItem`](/hooks#use-oryx-tool-call-item) is used to access metadata of each tool call inside `Oryx.ToolCalls.List`.
+- The status can be `"executing"`, `"completed"`, or `"failed"`.
+
+```tsx
+"use client";
+
+import { Oryx, useOryxToolCalls, useOryxToolCallItem } from "@contextualai/oryx-react";
+
+// ---------- Tool call item ----------
+
+function ToolCallItem() {
+  const { toolCall } = useOryxToolCallItem();
+
+  return (
+    <div className="tool-call">
+      <Oryx.ToolCall.Status
+        render={(status) => (
+          <span className={`status-${status}`}>{status}</span>
+        )}
+      />
+      <Oryx.ToolCall.Name
+        render={(name) => (
+          <span className="tool-name">{name}</span>
+        )}
+      />
+      <Oryx.ToolCall.Arguments
+        render={(args) => (
+          <pre>{JSON.stringify(args, null, 2)}</pre>
+        )}
+      />
+      <Oryx.ToolCall.Output
+        render={(output) => (
+          <pre>{JSON.stringify(output, null, 2)}</pre>
+        )}
+      />
+      <Oryx.ToolCall.Error
+        render={(error) => (
+          <span className="error">{error}</span>
+        )}
+      />
+    </div>
+  );
+}
+
+// ---------- Tool calls section ----------
+
+export function ToolCallsSection() {
+  const { hasToolCalls, toolCalls } = useOryxToolCalls();
+
+  if (!hasToolCalls) {
+    return null;
+  }
+
+  return (
+    <div className="tool-calls-section">
+      <h4>Tool Calls ({toolCalls.length})</h4>
+      <Oryx.ToolCalls.List>
+        <ToolCallItem />
+      </Oryx.ToolCalls.List>
+    </div>
+  );
+}
+```
+
+# Showing thinking steps
+
+Use `Oryx.Thinking.*` to render the agent's reasoning process. This is useful for showing users what the agent is considering while generating a response.
+
+- In the example below, [`useOryxThinkingStepItem`](/hooks#use-oryx-thinking-step-item) is used to access the thinking step data.
+- The `isCompleted` field indicates whether the thinking step is still in progress.
+
+```tsx
+"use client";
+
+import { Oryx, useOryxThinking, useOryxThinkingStepItem } from "@contextualai/oryx-react";
+
+// ---------- Thinking step item ----------
+
+function ThinkingStepItem() {
+  const { thinkingStep } = useOryxThinkingStepItem();
+
+  return (
+    <div className="thinking-step">
+      <Oryx.Thinking.Summary
+        render={(summary) => (
+          <div className="summary">{summary}</div>
+        )}
+      />
+      <Oryx.Thinking.Content
+        render={(content) => (
+          <div className="content">{content}</div>
+        )}
+      />
+      <Oryx.Thinking.Status
+        render={(isCompleted) =>
+          !isCompleted && <span className="thinking-indicator">Thinking...</span>
+        }
+      />
+    </div>
+  );
+}
+
+// ---------- Thinking section ----------
+
+export function ThinkingSection() {
+  const { hasThinking, currentThinking } = useOryxThinking();
+
+  if (!hasThinking) {
+    return null;
+  }
+
+  return (
+    <div className="thinking-section">
+      <h4>
+        Thinking
+        {currentThinking && !currentThinking.isCompleted && "..."}
+      </h4>
+      <Oryx.Thinking.List>
+        <ThinkingStepItem />
+      </Oryx.Thinking.List>
+    </div>
+  );
+}
+```
+
+# Showing workflow steps
+
+Use `Oryx.WorkflowSteps.*` to render workflow progress for multi-step agent executions.
+
+- In the example below, [`useOryxWorkflowStepItem`](/hooks#use-oryx-workflow-step-item) is used to access the workflow step data.
+- The status can be `"running"`, `"completed"`, `"failed"`, or `"cancelled"`.
+
+```tsx
+"use client";
+
+import { Oryx, useOryxWorkflowSteps, useOryxWorkflowStepItem } from "@contextualai/oryx-react";
+
+// ---------- Workflow step item ----------
+
+function WorkflowStepItem() {
+  const { workflowStep } = useOryxWorkflowStepItem();
+
+  return (
+    <div className="workflow-step">
+      <Oryx.WorkflowStep.Name
+        render={(name) => (
+          <span className="step-name">{name}</span>
+        )}
+      />
+      <Oryx.WorkflowStep.Type
+        render={(type) => (
+          <span className="step-type">{type}</span>
+        )}
+      />
+      <Oryx.WorkflowStep.Status
+        render={(status) => (
+          <span className={`status-${status}`}>{status}</span>
+        )}
+      />
+    </div>
+  );
+}
+
+// ---------- Workflow steps section ----------
+
+export function WorkflowStepsSection() {
+  const { hasWorkflowSteps, currentStep } = useOryxWorkflowSteps();
+
+  if (!hasWorkflowSteps) {
+    return null;
+  }
+
+  return (
+    <div className="workflow-steps-section">
+      <h4>Workflow Progress</h4>
+      <Oryx.WorkflowSteps.List>
+        <WorkflowStepItem />
+      </Oryx.WorkflowSteps.List>
+    </div>
+  );
+}
+```
+
+# Combining all intermediate steps
+
+You can combine all intermediate step components into a single section that appears before the agent message. The [`useOryxIntermediateSteps`](/hooks#use-oryx-intermediate-steps) hook provides a unified view of all steps in chronological order.
+
+```tsx
+"use client";
+
+import { Oryx, useOryxIntermediateSteps } from "@contextualai/oryx-react";
+
+export function IntermediateStepsSection() {
+  const { steps, hasSteps, currentStage } = useOryxIntermediateSteps();
+
+  if (!hasSteps) {
+    return null;
+  }
+
+  return (
+    <div className="intermediate-steps">
+      {currentStage && (
+        <div className="current-stage">Stage: {currentStage}</div>
+      )}
+
+      {steps.map((step, index) => (
+        <div key={index} className={`step step-${step.type}`}>
+          {step.type === "tool_call" && (
+            <span>Tool: {step.data.name} ({step.data.status})</span>
+          )}
+          {step.type === "thinking" && (
+            <span>Thinking: {step.data.summary ?? "..."}</span>
+          )}
+          {step.type === "workflow" && (
+            <span>Step: {step.data.name} ({step.data.status})</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+# Putting it together
+
+Place intermediate step components inside your message list, typically before `Oryx.Message.Agent`:
+
+```tsx
+<Oryx.Messages.List>
+  <Oryx.Message.User />
+  <IntermediateStepsSection />
+  <Oryx.Message.Agent render={(content) => <MarkdownRenderer content={content} />} />
+</Oryx.Messages.List>
+```
+
+> Check out the [complete working example](https://github.com/ContextualAI/oryx/tree/main/examples/basic-usage) for a styled implementation of intermediate steps.
+
+# Backend SSE events <AnchorTag id="backend-events" />
+
+<div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-5">
+  <p className="text-amber-800 text-sm mb-0"><strong>Note:</strong> These are the SSE events that Oryx listens for to populate intermediate step state. Your backend must emit these events for the components above to render data.</p>
+</div>
+
+**Stage events**
+
+The `stepping` event signals a workflow stage change. Oryx uses this to update `currentStage` exposed by [`useOryxCurrentStage`](/hooks#use-oryx-current-stage).
+
+```json
+{
+  "type": "retrieval" | "generation" | "attribution" | "post_processing" | "finalization"
+}
+```
+
+**Tool call events**
+
+Tool calls use a start/end event pair. The `tool_id` links them together.
+
+`tool_call_start` <span className="text-secondary">— emitted when a tool begins executing.</span>
+
+```json
+{
+  "tool_id": "unique-id",
+  "tool_name": "search_documents",
+  "tool_args": "{\"query\": \"example\"}"
+}
+```
+
+`tool_call_end` <span className="text-secondary">— emitted when a tool finishes.</span>
+
+```json
+{
+  "tool_id": "unique-id",
+  "tool_output": "result data",
+  "successful": true,
+  "error": ""
+}
+```
+
+**Thinking events**
+
+Thinking events support streaming content via deltas. The `think_id` links related events.
+
+`thinking_start` <span className="text-secondary">— emitted when reasoning begins.</span>
+
+```json
+{
+  "think_id": "unique-id"
+}
+```
+
+`thinking_delta` <span className="text-secondary">— emitted for each chunk of thinking content.</span>
+
+```json
+{
+  "think_id": "unique-id",
+  "delta": "Let me consider..."
+}
+```
+
+`thinking_end` <span className="text-secondary">— emitted when reasoning completes.</span>
+
+```json
+{
+  "think_id": "unique-id",
+  "thinking_summary": "Analyzed the query and determined the best approach."
+}
+```
+
+**Workflow step events**
+
+Workflow steps use a start/end event pair. The `step_id` links them together.
+
+`step_start` <span className="text-secondary">— emitted when a workflow step begins.</span>
+
+```json
+{
+  "step_id": "unique-id",
+  "step_name": "Document Retrieval",
+  "step_type": "retrieval"
+}
+```
+
+`step_end` <span className="text-secondary">— emitted when a workflow step finishes.</span>
+
+```json
+{
+  "step_id": "unique-id",
+  "status": "completed" | "failed" | "cancelled"
+}
+```
+
+<AfterContentNavigation
+  prevLabel={"Retrievals"}
+  prevHref={"/retrievals"}
+  nextLabel={"Composition Guide"}
+  nextHref={"/composition"}
+/>
